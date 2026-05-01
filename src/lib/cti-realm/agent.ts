@@ -180,6 +180,21 @@ export async function runCtiRealmAgent(
     throw new Error("runCtiRealmAgent: tools[] must be a non-empty array of CTI-REALM tool definitions.");
   }
 
+  // claude-agent-sdk rejects duplicate tool names in a single MCP server.
+  // inspect-ai's tool registry occasionally surfaces the same tool twice
+  // (variant overloads, decorator vs metadata) and at least one collides
+  // with the SDK's reserved name "execute". Dedupe + rename collisions.
+  const RESERVED = new Set(["execute", "bash", "read", "write", "edit", "glob", "grep", "task"]);
+  const seen = new Set<string>();
+  const uniqueTools: CtiRealmTool[] = [];
+  for (const t of tools) {
+    let name = t.name;
+    if (RESERVED.has(name.toLowerCase())) name = `${name}_cti`;
+    if (seen.has(name)) continue; // drop dup
+    seen.add(name);
+    uniqueTools.push({ ...t, name });
+  }
+
   const transcript: Array<{ role: "user" | "assistant"; content: string }> = [
     { role: "user", content: ctiReport },
   ];
@@ -192,7 +207,7 @@ export async function runCtiRealmAgent(
   // tool's real schema is defined upstream by inspect-ai and Claude has
   // already seen it via the system prompt; we don't re-validate here.
   const passthrough = z.object({}).passthrough();
-  const sdkTools = tools.map((t) => ({
+  const sdkTools = uniqueTools.map((t) => ({
     name: t.name,
     description: t.description,
     inputSchema: passthrough.shape,
@@ -249,7 +264,7 @@ export async function runCtiRealmAgent(
       includePartialMessages: false,
       // Allow only our cti-realm tools — strip out the default Claude Code
       // toolset (Read/Bash/etc.) so the model can't escape into the host.
-      allowedTools: tools.map((t) => `mcp__cti-realm-tools__${t.name}`),
+      allowedTools: uniqueTools.map((t) => `mcp__cti-realm-tools__${t.name}`),
     },
   });
 
