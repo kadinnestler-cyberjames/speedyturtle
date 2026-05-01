@@ -12,10 +12,11 @@ export async function POST(req: NextRequest) {
   try {
     // Vercel serverless doesn't ship with the scanner CLIs (nuclei, httpx,
     // subfinder) and has a 5-minute function ceiling that nuclei can't fit
-    // in. We render the public site as a marketing + demo + benchmark surface
-    // and ask operators to self-host for live scans. SPEEDYTURTLE_DEMO_MODE=1
-    // is set in the Vercel project — local dev leaves it unset.
-    if (process.env.SPEEDYTURTLE_DEMO_MODE === "1") {
+    // in. Auto-detect Vercel via the platform-provided VERCEL env var (always
+    // "1" on Vercel deploys); the SPEEDYTURTLE_DEMO_MODE override exists for
+    // local-prod testing.
+    const inDemoMode = process.env.VERCEL === "1" || process.env.SPEEDYTURTLE_DEMO_MODE === "1";
+    if (inDemoMode) {
       return NextResponse.json(
         {
           error: "Live scans are self-hosted only.",
