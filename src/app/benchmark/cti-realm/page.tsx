@@ -134,7 +134,7 @@ export default async function CtiRealmScoreboardPage() {
                 </td>
                 <td className="px-4 py-3 text-slate-300">
                   {latest
-                    ? `${latest.task} · ${latest.model ?? "claude-opus-4-5"} · ${latest.samples_run ?? "?"}/${latest.samples_total ?? "?"} samples`
+                    ? `${latest.task} · ${latest.model ?? "claude-opus-4-7"} · ${latest.samples_run ?? "?"}/${latest.samples_total ?? "?"} samples`
                     : "Operator must add ANTHROPIC_API_KEY + Docker. See unblock instructions above."}
                 </td>
               </tr>
@@ -363,7 +363,7 @@ function LatestScoreCard({ entry }: { entry: ScoreEntry }) {
         <div className="text-slate-400 text-sm pb-2">
           <div>{entry.task}</div>
           <div className="text-xs">
-            {entry.model ?? "claude-opus-4-5"} · {entry.samples_run ?? "?"}/{entry.samples_total ?? "?"} samples
+            {entry.model ?? "claude-opus-4-7"} · {entry.samples_run ?? "?"}/{entry.samples_total ?? "?"} samples
           </div>
           <div className="text-xs text-slate-500 font-mono mt-1">{entry.run_id}</div>
         </div>

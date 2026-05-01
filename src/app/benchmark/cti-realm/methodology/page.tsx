@@ -92,7 +92,7 @@ export default function CtiRealmMethodologyPage() {
             We swap the upstream <code className="text-amber-200 text-sm">react()</code> solver for a
             speedyturtle-specific ReAct loop implemented in TypeScript at{" "}
             <code className="text-amber-200 text-sm">src/lib/cti-realm/agent.ts</code>. The agent drives
-            Claude Opus 4.5 (model literal <code className="text-amber-200 text-sm">claude-opus-4-5</code>)
+            Claude Opus 4.7 (model literal <code className="text-amber-200 text-sm">claude-opus-4-7</code>)
             through a tool-use loop using the Anthropic SDK. Tool definitions are NOT defined in the agent
             — they come in over the stdio bridge from Inspect&apos;s tool registry. That means MITRE,
             Sigma, and Kusto tools all match the upstream task spec exactly, so our score is directly

@@ -22,7 +22,7 @@
  *       "type": "init",
  *       "ctiReport": "<detection objective + supporting context>",
  *       "tools": [ { "name": "...", "description": "...", "input_schema": {...} } ],
- *       "model": "claude-opus-4-5",
+ *       "model": "claude-opus-4-7",
  *       "maxIterations": 25
  *     }
  *
@@ -35,7 +35,7 @@
  *   Python -> agent stdin (one JSON per line):
  *     { "type": "tool_result", "id": "<tool_use_id>", "content": "<string>" | [{...}], "isError": false }
  *
- * The model literal is a string ("claude-opus-4-5"); the SDK accepts arbitrary
+ * The model literal is a string ("claude-opus-4-7"); the SDK accepts arbitrary
  * model identifiers. If the API rejects it, we fall back to the latest known-good
  * Opus id and emit an `assistant_text` event noting the swap.
  */
@@ -89,7 +89,7 @@ export type ToolExecutor = (
 export type RunCtiRealmAgentOptions = {
   ctiReport: string;
   tools: CtiRealmTool[];
-  /** Model literal; defaults to `claude-opus-4-5`. */
+  /** Model literal; defaults to `claude-opus-4-7`. */
   model?: string;
   /** Hard cap on tool-use iterations. Defaults to 25. */
   maxIterations?: number;
@@ -118,9 +118,9 @@ export type AgentEvent =
 // Defaults
 // -----------------------------------------------------------------------------
 
-const DEFAULT_MODEL = "claude-opus-4-5";
+const DEFAULT_MODEL = "claude-opus-4-7";
 // Fallback used if the primary model literal is rejected at runtime.
-const FALLBACK_MODEL = "claude-opus-4-5-20250929";
+const FALLBACK_MODEL = "claude-opus-4-7";
 const DEFAULT_MAX_ITERATIONS = 25;
 const DEFAULT_MAX_TOKENS = 4096;
 
