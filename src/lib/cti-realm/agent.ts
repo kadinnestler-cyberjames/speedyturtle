@@ -1,6 +1,7 @@
 /**
- * CTI-REALM agent — drives Claude through a ReAct tool-use loop for the
- * Microsoft CTI-REALM benchmark (https://github.com/UKGovernmentBEIS/inspect_evals).
+ * CTI-REALM agent — drives Claude through a tool-use loop for the Microsoft
+ * CTI-REALM benchmark (https://github.com/UKGovernmentBEIS/inspect_evals)
+ * using the Claude Agent SDK against the operator's Claude Code subscription.
  *
  * Two surfaces:
  *
@@ -35,15 +36,17 @@
  *   Python -> agent stdin (one JSON per line):
  *     { "type": "tool_result", "id": "<tool_use_id>", "content": "<string>" | [{...}], "isError": false }
  *
- * The model literal is a string ("claude-opus-4-7"); the SDK accepts arbitrary
- * model identifiers. If the API rejects it, we fall back to the latest known-good
- * Opus id and emit an `assistant_text` event noting the swap.
+ * Auth: the SDK uses the `claude` CLI's existing authentication (Claude Pro/Max
+ * subscription via OAuth, or ANTHROPIC_API_KEY if set). No API key is required
+ * if the operator has run `claude /login` against their subscription.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
+import { query, createSdkMcpServer } from "@anthropic-ai/claude-agent-sdk";
+import { z } from "zod";
 
 // -----------------------------------------------------------------------------
-// Types
+// Types — kept identical to the previous Anthropic-SDK-based agent so the
+// Python bridge wire format is unchanged.
 // -----------------------------------------------------------------------------
 
 export type CtiRealmTool = {
@@ -57,6 +60,10 @@ export type CtiRealmTool = {
   };
 };
 
+type ToolResultBlockContent =
+  | string
+  | Array<{ type: "text"; text: string } | { type: "image"; source: unknown }>;
+
 export type CtiRealmAgentResult = {
   techniques: string[];
   dataSources: string[];
@@ -67,8 +74,12 @@ export type CtiRealmAgentResult = {
    * query_results) — preserved verbatim for the Inspect scorer.
    */
   finalText: string;
-  /** Full list of every (role, content) message exchanged in the loop. */
-  transcript: Array<Anthropic.MessageParam>;
+  /**
+   * Compact transcript of (role, content) pairs. Tool-use rounds are flattened —
+   * each tool call shows up as a synthetic "tool_use:<name>(input)" assistant
+   * line and a "tool_result:<id>" user line so the scorer can read the trajectory.
+   */
+  transcript: Array<{ role: "user" | "assistant"; content: string }>;
   /** Why the loop terminated. */
   stopReason:
     | "end_turn"
@@ -84,7 +95,7 @@ export type ToolExecutor = (
   toolUseId: string,
   toolName: string,
   toolInput: Record<string, unknown>,
-) => Promise<{ content: string | Anthropic.ToolResultBlockParam["content"]; isError?: boolean }>;
+) => Promise<{ content: string | ToolResultBlockContent; isError?: boolean }>;
 
 export type RunCtiRealmAgentOptions = {
   ctiReport: string;
@@ -99,7 +110,7 @@ export type RunCtiRealmAgentOptions = {
   onEvent?: (event: AgentEvent) => void;
   /** Optional: override system prompt. The default is CTI-REALM-aligned. */
   systemPrompt?: string;
-  /** Optional: API key (defaults to ANTHROPIC_API_KEY env). */
+  /** Reserved — the SDK derives auth from the operator's Claude Code login. Ignored. */
   apiKey?: string;
   /** Max output tokens per turn. Default 4096. */
   maxTokens?: number;
@@ -119,8 +130,6 @@ export type AgentEvent =
 // -----------------------------------------------------------------------------
 
 const DEFAULT_MODEL = "claude-opus-4-7";
-// Fallback used if the primary model literal is rejected at runtime.
-const FALLBACK_MODEL = "claude-opus-4-7";
 const DEFAULT_MAX_ITERATIONS = 25;
 const DEFAULT_MAX_TOKENS = 4096;
 
@@ -164,122 +173,123 @@ export async function runCtiRealmAgent(
     executor,
     onEvent,
     systemPrompt = DEFAULT_SYSTEM_PROMPT,
-    apiKey = process.env.ANTHROPIC_API_KEY,
     maxTokens = DEFAULT_MAX_TOKENS,
   } = options;
 
-  if (!apiKey) {
-    throw new Error(
-      "ANTHROPIC_API_KEY is not set. Source ~/.config/secrets.env or export the key before running the CTI-REALM agent.",
-    );
-  }
   if (!Array.isArray(tools) || tools.length === 0) {
     throw new Error("runCtiRealmAgent: tools[] must be a non-empty array of CTI-REALM tool definitions.");
   }
 
-  const client = new Anthropic({ apiKey });
-  const transcript: Anthropic.MessageParam[] = [
+  const transcript: Array<{ role: "user" | "assistant"; content: string }> = [
     { role: "user", content: ctiReport },
   ];
-
-  let activeModel = model;
   let stopReason: CtiRealmAgentResult["stopReason"] = "unknown";
   let finalText = "";
+  let iterationCount = 0;
 
-  for (let iter = 0; iter < maxIterations; iter++) {
-    let response: Anthropic.Message;
-    try {
-      response = await client.messages.create({
-        model: activeModel,
-        max_tokens: maxTokens,
-        system: systemPrompt,
-        tools: tools as unknown as Anthropic.Tool[],
-        messages: transcript,
+  // Build an in-process MCP server whose tools forward to the executor.
+  // We use a permissive Zod input schema (passthrough object) because each
+  // tool's real schema is defined upstream by inspect-ai and Claude has
+  // already seen it via the system prompt; we don't re-validate here.
+  const passthrough = z.object({}).passthrough();
+  const sdkTools = tools.map((t) => ({
+    name: t.name,
+    description: t.description,
+    inputSchema: passthrough.shape,
+    handler: async (args: Record<string, unknown>) => {
+      iterationCount += 1;
+      const syntheticToolUseId = `cti_realm_${iterationCount}_${Date.now()}`;
+      onEvent?.({
+        type: "tool_request",
+        id: syntheticToolUseId,
+        name: t.name,
+        input: args,
       });
-    } catch (err) {
-      // If the literal model id is rejected, try the dated fallback ONCE.
-      const msg = err instanceof Error ? err.message : String(err);
-      if (activeModel === DEFAULT_MODEL && /model/i.test(msg) && /not.*found|invalid|unknown/i.test(msg)) {
-        onEvent?.({ type: "model_swap", from: activeModel, to: FALLBACK_MODEL, reason: msg });
-        activeModel = FALLBACK_MODEL;
-        iter -= 1;
-        continue;
+      transcript.push({
+        role: "assistant",
+        content: `tool_use:${t.name}(${JSON.stringify(args).slice(0, 400)})`,
+      });
+      try {
+        const { content, isError } = await executor(syntheticToolUseId, t.name, args);
+        onEvent?.({ type: "tool_result", id: syntheticToolUseId, isError: !!isError });
+        const text = typeof content === "string" ? content : JSON.stringify(content);
+        transcript.push({ role: "user", content: `tool_result:${syntheticToolUseId} ${text.slice(0, 400)}` });
+        return {
+          content: [{ type: "text" as const, text }],
+          isError: !!isError,
+        };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        onEvent?.({ type: "tool_result", id: syntheticToolUseId, isError: true });
+        transcript.push({ role: "user", content: `tool_result:${syntheticToolUseId} ERROR ${msg}` });
+        return {
+          content: [{ type: "text" as const, text: `Tool execution error: ${msg}` }],
+          isError: true,
+        };
       }
-      stopReason = "model_error";
-      onEvent?.({ type: "error", message: `Anthropic API error: ${msg}` });
-      throw err;
-    }
+    },
+  }));
 
-    onEvent?.({ type: "iteration", n: iter + 1, stopReason: response.stop_reason });
+  const mcpServer = createSdkMcpServer({
+    name: "cti-realm-tools",
+    version: "1.0.0",
+    tools: sdkTools,
+  });
 
-    // Append the assistant turn to the transcript verbatim.
-    transcript.push({ role: "assistant", content: response.content });
+  // Drive the SDK. The agent SDK wraps `claude -p` so it uses the operator's
+  // subscription auth — no ANTHROPIC_API_KEY required.
+  const stream = query({
+    prompt: ctiReport,
+    options: {
+      model,
+      systemPrompt: { type: "preset" as const, preset: "claude_code" as const, append: systemPrompt },
+      mcpServers: { "cti-realm-tools": mcpServer },
+      maxTurns: maxIterations,
+      maxThinkingTokens: maxTokens,
+      includePartialMessages: false,
+      // Allow only our cti-realm tools — strip out the default Claude Code
+      // toolset (Read/Bash/etc.) so the model can't escape into the host.
+      allowedTools: tools.map((t) => `mcp__cti-realm-tools__${t.name}`),
+    },
+  });
 
-    // Capture any text blocks for the final answer + event stream.
-    for (const block of response.content) {
-      if (block.type === "text") {
-        onEvent?.({ type: "assistant_text", text: block.text });
-        finalText = block.text; // last text block becomes the candidate final answer
-      }
-    }
-
-    if (response.stop_reason === "end_turn") {
-      stopReason = "end_turn";
-      break;
-    }
-
-    if (response.stop_reason !== "tool_use") {
-      // stop_sequence, max_tokens, refusal, etc. — terminate gracefully.
-      stopReason =
-        response.stop_reason === "stop_sequence" ? "stop_sequence" : "unknown";
-      break;
-    }
-
-    // Execute every tool_use block in parallel and append a single user turn
-    // containing all tool_result blocks (Anthropic SDK requires this shape).
-    const toolUses = response.content.filter(
-      (b): b is Anthropic.ToolUseBlock => b.type === "tool_use",
-    );
-
-    const toolResults: Anthropic.ToolResultBlockParam[] = await Promise.all(
-      toolUses.map(async (block) => {
-        onEvent?.({
-          type: "tool_request",
-          id: block.id,
-          name: block.name,
-          input: (block.input ?? {}) as Record<string, unknown>,
-        });
-        try {
-          const { content, isError } = await executor(
-            block.id,
-            block.name,
-            (block.input ?? {}) as Record<string, unknown>,
-          );
-          onEvent?.({ type: "tool_result", id: block.id, isError: !!isError });
-          return {
-            type: "tool_result",
-            tool_use_id: block.id,
-            content: typeof content === "string" ? content : content,
-            is_error: !!isError,
-          } satisfies Anthropic.ToolResultBlockParam;
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          onEvent?.({ type: "tool_result", id: block.id, isError: true });
-          return {
-            type: "tool_result",
-            tool_use_id: block.id,
-            content: `Tool execution error: ${msg}`,
-            is_error: true,
-          } satisfies Anthropic.ToolResultBlockParam;
+  try {
+    let assistantTurns = 0;
+    for await (const msg of stream) {
+      if (msg.type === "assistant") {
+        assistantTurns += 1;
+        onEvent?.({ type: "iteration", n: assistantTurns, stopReason: msg.message.stop_reason ?? null });
+        for (const block of msg.message.content ?? []) {
+          if (block.type === "text" && typeof block.text === "string") {
+            onEvent?.({ type: "assistant_text", text: block.text });
+            finalText = block.text;
+            transcript.push({ role: "assistant", content: block.text });
+          }
         }
-      }),
-    );
-
-    transcript.push({ role: "user", content: toolResults });
-
-    if (iter === maxIterations - 1) {
-      stopReason = "max_iterations";
+        if (msg.message.stop_reason === "end_turn") {
+          stopReason = "end_turn";
+        } else if (msg.message.stop_reason === "stop_sequence") {
+          stopReason = "stop_sequence";
+        } else if (msg.message.stop_reason === "max_tokens") {
+          stopReason = "max_iterations";
+        }
+      } else if (msg.type === "result") {
+        // Final result event — overrides earlier provisional stopReason.
+        if ("result" in msg && typeof msg.result === "string" && msg.result) {
+          finalText = msg.result;
+        }
+        if ("subtype" in msg) {
+          if (msg.subtype === "success") stopReason = stopReason === "unknown" ? "end_turn" : stopReason;
+          else if (msg.subtype === "error_max_turns") stopReason = "max_iterations";
+          else if (msg.subtype === "error_during_execution") stopReason = "model_error";
+        }
+      }
     }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    stopReason = "model_error";
+    onEvent?.({ type: "error", message: `Agent SDK error: ${msg}` });
+    throw err;
   }
 
   const parsed = extractStructuredAnswer(finalText);
@@ -310,7 +320,6 @@ function extractStructuredAnswer(text: string): {
 } {
   const empty = { techniques: [] as string[], dataSources: [] as string[], kql: [] as string[], sigma: "" };
   if (!text) return empty;
-  // Find the first top-level JSON object.
   const fenceMatch = text.match(/```(?:json)?\s*\n([\s\S]*?)```/);
   const candidate = fenceMatch ? fenceMatch[1] : text;
   const objMatch = candidate.match(/\{[\s\S]*\}/);
@@ -325,7 +334,6 @@ function extractStructuredAnswer(text: string): {
   const kqlQuery = typeof parsed["kql_query"] === "string" ? (parsed["kql_query"] as string) : "";
   const kql = kqlQuery ? [kqlQuery] : [];
 
-  // Techniques: Tnnnn / Tnnnn.nnn pulled from sigma rule + kql query text.
   const techSet = new Set<string>();
   const techRe = /\bT\d{4}(?:\.\d{3})?\b/g;
   for (const blob of [sigma, kqlQuery]) {
@@ -333,10 +341,8 @@ function extractStructuredAnswer(text: string): {
     while ((m = techRe.exec(blob)) !== null) techSet.add(m[0]);
   }
 
-  // Data sources: best-effort — pull table names from the FROM/`|` segments
-  // of the KQL query and from sigma `logsource:` blocks.
   const dataSet = new Set<string>();
-  const kqlTableRe = /^\s*([A-Za-z_][A-Za-z0-9_]*)/m; // first token of a KQL pipeline
+  const kqlTableRe = /^\s*([A-Za-z_][A-Za-z0-9_]*)/m;
   const firstTable = kqlQuery.match(kqlTableRe);
   if (firstTable) dataSet.add(firstTable[1]);
   const sigmaProductRe = /\bproduct:\s*([A-Za-z0-9_-]+)/i;
@@ -371,7 +377,7 @@ type CliInitMessage = {
 type CliToolResultMessage = {
   type: "tool_result";
   id: string;
-  content: string | Anthropic.ToolResultBlockParam["content"];
+  content: string | ToolResultBlockContent;
   isError?: boolean;
 };
 
@@ -382,11 +388,9 @@ function emit(event: AgentEvent): void {
 }
 
 async function runCli(): Promise<void> {
-  // Stream stdin -> NDJSON messages. The first one must be `init`; subsequent
-  // ones are `tool_result` payloads matched by tool_use_id.
   const pendingResolvers = new Map<
     string,
-    (res: { content: string | Anthropic.ToolResultBlockParam["content"]; isError?: boolean }) => void
+    (res: { content: string | ToolResultBlockContent; isError?: boolean }) => void
   >();
 
   let initResolve: ((m: CliInitMessage) => void) | null = null;
@@ -455,11 +459,9 @@ async function runCli(): Promise<void> {
   }
 }
 
-// Entry: only run the CLI when this module is executed directly (not imported).
 const isCliEntry = (() => {
-  // tsx + node both set process.argv[1] to the entry path.
-  const entry = process.argv[1] ?? "";
-  return entry.endsWith("agent.ts") || entry.endsWith("agent.js");
+  const entry = (process.argv[1] ?? "").split(/[\\/]/).pop() ?? "";
+  return entry === "agent.ts" || entry === "agent.js";
 })();
 
 if (isCliEntry) {
