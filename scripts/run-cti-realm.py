@@ -127,22 +127,32 @@ def _resolve_node_bin() -> tuple[str, str]:
 
 
 def _check_api_key() -> None:
-    """Hard-fail if ANTHROPIC_API_KEY is missing or obviously malformed.
+    """Warn if ANTHROPIC_API_KEY is missing.
+
+    The TS agent (src/lib/cti-realm/agent.ts) now uses claude-agent-sdk and
+    runs against the operator's Claude Code subscription — no key required
+    for the agent loop itself. inspect-ai's scorer, however, still calls the
+    Anthropic API for the LLM-as-judge C4 (Detection Quality, 65% of score)
+    checkpoint. With no key the scorer will produce N/A for C4 and we'll
+    publish a partial honest score (max ~35% on C0-C3 only).
 
     We do NOT mock benchmark scores — see the ticket spec.
     """
     key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if not key:
         sys.stderr.write(
-            "ERROR: ANTHROPIC_API_KEY is not set in the environment.\n"
-            "Source ~/.config/secrets.env (and ensure the ANTHROPIC_API_KEY line\n"
-            "is uncommented + populated) before running this script.\n"
+            "[run-cti-realm] ANTHROPIC_API_KEY not set. The agent loop will "
+            "use the Claude Code subscription via claude-agent-sdk. The "
+            "scorer's C4 (Detection Quality) checkpoint requires an Anthropic "
+            "key and will be marked N/A — published score will reflect "
+            "C0-C3 only.\n"
         )
-        sys.exit(2)
+        return
     if not key.startswith("sk-"):
         sys.stderr.write(
-            "ERROR: ANTHROPIC_API_KEY does not look like a real Anthropic key "
-            "(expected a value starting with 'sk-').\n"
+            "ERROR: ANTHROPIC_API_KEY is set but does not look like a real "
+            "Anthropic key (expected a value starting with 'sk-'). Either "
+            "fix it or unset it to fall back to the subscription path.\n"
         )
         sys.exit(2)
 
@@ -547,7 +557,7 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=None, help="Max samples to run")
     parser.add_argument("--no-sandbox", action="store_true", help="Run without Docker (default: respect task spec)")
     parser.add_argument("--smoke", action="store_true", help="Smoke-test the plumbing (1 sample, no scoring)")
-    parser.add_argument("--model", default="claude-opus-4-5", help="Model literal passed to the TS agent")
+    parser.add_argument("--model", default="claude-opus-4-7", help="Model literal passed to the TS agent")
     parser.add_argument("--max-iterations", type=int, default=25)
     args = parser.parse_args()
 
