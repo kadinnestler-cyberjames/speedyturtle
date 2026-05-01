@@ -68,7 +68,8 @@ export ANTHROPIC_API_KEY=sk-ant-...        # required for the inspect-ai scorer
 | `DATABASE_URL` | Persisted scan history across restarts (Neon Postgres). Without it, scans live in-memory only. | Optional |
 | `STRIPE_SECRET_KEY` + `STRIPE_PRICE_ID_STARTER` / `_PRO` / `_UNLIMITED` + `STRIPE_WEBHOOK_SECRET` | Paid-tier checkout via `/pricing`. Without them, checkout returns 503. | Optional |
 | `CRON_SECRET` | Authenticates Vercel cron triggers for `/api/blue-team/monitor/run` and `/api/benchmark/cti-realm/refresh`. Required in production. | Required for Vercel cron |
-| `RESEND_API_KEY` | Email scan reports to operators. Wiring exists in CLAUDE.md MCP layer. | Future |
+| `RESEND_API_KEY` + `RESEND_FROM_ADDRESS` | Transactional email of scan reports to the visitor's email. Triage + risks + persona scores + report link + PDF link. Fire-and-forget; silently no-ops without keys. | **Wired.** Sign up at https://resend.com (100/day free), verify a domain you own at https://resend.com/domains, set `RESEND_FROM_ADDRESS="speedyturtle <reports@yourdomain.com>"`. Without a verified domain, sends only work to the Resend account email. |
+| `SPEEDYTURTLE_WORKER_URL` | Proxy `/api/scan*` and `/scan/*` paths from the live Vercel deploy to a self-hosted worker (typically a Cloudflare Tunnel back to your Mac). Lets visitors run real scans without you running scanners on Vercel. | Optional. Skip if forks just want a marketing site. |
 | `NEXT_PUBLIC_BASE_URL` | Override the origin used in checkout success/cancel URLs. Defaults to `https://speedyturtle-smb.vercel.app`. | Optional |
 | `SPEEDYTURTLE_DEMO_MODE` | Force `/api/scan` to return 503 (auto-set on Vercel via `process.env.VERCEL`). | Auto-detected |
 
