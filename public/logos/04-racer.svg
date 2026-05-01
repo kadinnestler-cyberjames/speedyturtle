@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="speedyturtle racer">
+  <title>speedyturtle · racer</title>
+  <rect width="256" height="256" fill="#fef2f2"/>
+  <!-- Speed streaks -->
+  <g stroke="#ef4444" stroke-linecap="round" fill="none">
+    <line x1="10" y1="116" x2="60" y2="116" stroke-width="6"/>
+    <line x1="2"  y1="138" x2="64" y2="138" stroke-width="9"/>
+    <line x1="14" y1="160" x2="58" y2="160" stroke-width="6"/>
+    <line x1="30" y1="98"  x2="64" y2="98"  stroke-width="3"/>
+    <line x1="30" y1="178" x2="64" y2="178" stroke-width="3"/>
+  </g>
+  <!-- Legs -->
+  <ellipse cx="100" cy="190" rx="14" ry="10" fill="#1e293b"/>
+  <ellipse cx="200" cy="190" rx="14" ry="10" fill="#1e293b"/>
+  <!-- Body -->
+  <ellipse cx="150" cy="142" rx="78" ry="40" fill="#1e293b"/>
+  <!-- Head -->
+  <circle cx="222" cy="128" r="22" fill="#fbbf24"/>
+  <!-- Helmet -->
+  <path d="M198 130 A 24 24 0 0 1 246 122 L 246 134 L 200 138 Z" fill="#dc2626"/>
+  <!-- Helmet stripe -->
+  <rect x="200" y="118" width="46" height="6" fill="#fbbf24"/>
+  <!-- Visor -->
+  <path d="M204 126 Q222 122 244 128 L244 134 Q222 134 204 132 Z" fill="#0f172a"/>
+  <!-- Helmet shine -->
+  <path d="M210 122 Q220 118 232 122" stroke="#fef2f2" stroke-width="2" fill="none" opacity="0.7"/>
+  <!-- Shell -->
+  <path d="M 78 142 A 72 64 0 0 1 222 142 Z" fill="#dc2626"/>
+  <!-- Racing stripes -->
+  <rect x="142" y="76" width="16" height="66" fill="#fef2f2"/>
+  <rect x="146" y="76" width="8" height="66" fill="#1e293b"/>
+  <!-- Number circle -->
+  <circle cx="120" cy="120" r="15" fill="#fef2f2"/>
+  <text x="120" y="126" text-anchor="middle" font-family="Impact, sans-serif" font-size="20" font-weight="900" fill="#dc2626">1</text>
+  <path d="M 78 142 A 72 64 0 0 1 222 142" stroke="#7f1d1d" stroke-width="3" fill="none"/>
+</svg>

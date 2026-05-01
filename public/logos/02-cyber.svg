@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="speedyturtle cyberpunk">
+  <title>speedyturtle · cyberpunk</title>
+  <defs>
+    <linearGradient id="cyberShell" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="0.5" stop-color="#06b6d4"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="256" height="256" fill="#0b0613"/>
+  <!-- Grid floor -->
+  <g stroke="#a855f7" stroke-width="0.5" opacity="0.25">
+    <line x1="0" y1="200" x2="256" y2="200"/><line x1="0" y1="220" x2="256" y2="220"/><line x1="0" y1="240" x2="256" y2="240"/>
+    <line x1="40" y1="180" x2="0" y2="256"/><line x1="120" y1="180" x2="100" y2="256"/><line x1="200" y1="180" x2="220" y2="256"/>
+  </g>
+  <!-- Speed streaks -->
+  <g stroke="#22d3ee" stroke-width="6" stroke-linecap="round" filter="url(#glow)">
+    <line x1="14" y1="118" x2="58" y2="118"/>
+    <line x1="6" y1="138" x2="62" y2="138"/>
+    <line x1="20" y1="158" x2="56" y2="158"/>
+  </g>
+  <ellipse cx="100" cy="190" rx="14" ry="10" fill="#1e1147"/>
+  <ellipse cx="200" cy="190" rx="14" ry="10" fill="#1e1147"/>
+  <ellipse cx="150" cy="142" rx="78" ry="40" fill="#1e1147"/>
+  <circle cx="222" cy="128" r="22" fill="#1e1147"/>
+  <!-- Glowing visor -->
+  <path d="M210 122 Q224 116 234 124" stroke="#22d3ee" stroke-width="4" fill="none" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M 78 142 A 72 64 0 0 1 222 142 Z" fill="url(#cyberShell)" filter="url(#glow)"/>
+  <!-- Circuit lines on shell -->
+  <g stroke="#0b0613" stroke-width="1.5" fill="none" opacity="0.7">
+    <path d="M100 138 L120 118 L140 138 L160 118 L180 138 L200 118"/>
+    <circle cx="100" cy="138" r="2"/><circle cx="140" cy="138" r="2"/><circle cx="180" cy="138" r="2"/>
+    <circle cx="120" cy="118" r="2"/><circle cx="160" cy="118" r="2"/><circle cx="200" cy="118" r="2"/>
+  </g>
+  <path d="M 78 142 A 72 64 0 0 1 222 142" stroke="#22d3ee" stroke-width="2" fill="none" filter="url(#glow)"/>
+</svg>

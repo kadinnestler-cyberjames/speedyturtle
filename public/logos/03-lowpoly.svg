@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="speedyturtle low-poly">
+  <title>speedyturtle · low-poly</title>
+  <rect width="256" height="256" fill="#0f172a"/>
+  <g stroke="#0f172a" stroke-width="0.5">
+    <!-- Body lower -->
+    <polygon points="80,150 150,170 220,150 200,180 100,180" fill="#475569"/>
+    <polygon points="100,180 150,170 200,180 180,195 120,195" fill="#334155"/>
+    <!-- Head -->
+    <polygon points="222,128 240,118 240,138 226,144" fill="#475569"/>
+    <polygon points="222,128 226,144 210,140 212,124" fill="#334155"/>
+    <!-- Shell faceted -->
+    <polygon points="80,150 110,80 150,70 150,150" fill="#10b981"/>
+    <polygon points="150,150 150,70 190,80 220,150" fill="#0d9488"/>
+    <polygon points="110,80 150,70 130,110" fill="#34d399"/>
+    <polygon points="150,70 190,80 170,110" fill="#34d399"/>
+    <polygon points="130,110 150,70 170,110" fill="#10b981"/>
+    <polygon points="80,150 110,80 130,110" fill="#0d9488"/>
+    <polygon points="220,150 190,80 170,110" fill="#10b981"/>
+    <polygon points="80,150 130,110 150,150" fill="#34d399"/>
+    <polygon points="150,150 170,110 220,150" fill="#34d399"/>
+  </g>
+  <!-- Eye -->
+  <polygon points="226,124 232,122 232,128 228,130" fill="#f8fafc"/>
+  <!-- Speed streaks -->
+  <g fill="#34d399">
+    <polygon points="14,116 58,116 60,120 16,120"/>
+    <polygon points="6,136 62,136 64,140 8,140"/>
+    <polygon points="20,156 56,156 58,160 22,160"/>
+  </g>
+</svg>

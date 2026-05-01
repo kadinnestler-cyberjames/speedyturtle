@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="speedyturtle monoline">
+  <title>speedyturtle · monoline</title>
+  <rect width="256" height="256" fill="#f8fafc"/>
+  <g fill="none" stroke="#0f172a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Speed streaks -->
+    <line x1="22" y1="118" x2="58" y2="118"/>
+    <line x1="14" y1="138" x2="60" y2="138"/>
+    <line x1="22" y1="158" x2="58" y2="158"/>
+    <!-- Body silhouette continuous: tail, back leg, belly, front leg, head, top of shell, back leg -->
+    <path d="M70 138
+             L82 130 L82 146 Z
+             M76 142
+             Q120 200 188 188
+             Q224 184 230 156
+             Q236 138 232 124
+             A 80 70 0 0 0 76 138 Z"/>
+    <!-- Eye -->
+    <circle cx="222" cy="124" r="3" fill="#0f172a"/>
+  </g>
+</svg>

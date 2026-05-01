@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ScanResult } from "@/components/ScanResult";
 import { buildDemoScan } from "@/lib/demo-scan";
+import { Logo } from "@/components/Logo";
 
 export default function DemoPage() {
   const scan = buildDemoScan();
@@ -8,8 +9,9 @@ export default function DemoPage() {
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-slate-800">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="font-bold tracking-tight">
-            🐢 <span className="text-emerald-400">speedyturtle</span>
+          <Link href="/" className="font-bold tracking-tight flex items-center gap-2">
+            <Logo size={28} />
+            <span className="text-emerald-400">speedyturtle</span>
           </Link>
           <Link href="/red-team" className="px-4 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-semibold text-sm hover:bg-emerald-400">
             Run a real scan →

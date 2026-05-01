@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="speedyturtle shield">
+  <title>speedyturtle · shield</title>
+  <rect width="256" height="256" fill="#0c1424"/>
+  <!-- Speed streaks -->
+  <g stroke="#fbbf24" stroke-linecap="round" fill="none" opacity="0.85">
+    <line x1="14" y1="118" x2="58" y2="118" stroke-width="5"/>
+    <line x1="6"  y1="138" x2="62" y2="138" stroke-width="7"/>
+    <line x1="20" y1="158" x2="56" y2="158" stroke-width="5"/>
+  </g>
+  <!-- Legs -->
+  <ellipse cx="100" cy="200" rx="14" ry="10" fill="#0a0f1c"/>
+  <ellipse cx="200" cy="200" rx="14" ry="10" fill="#0a0f1c"/>
+  <!-- Body -->
+  <ellipse cx="150" cy="155" rx="78" ry="40" fill="#1e293b"/>
+  <!-- Head -->
+  <circle cx="222" cy="138" r="22" fill="#1e293b"/>
+  <circle cx="226" cy="132" r="3" fill="#fbbf24"/>
+  <!-- Shield-shaped shell -->
+  <path d="M 80 100
+           L 220 100
+           L 220 130
+           Q 220 170 150 200
+           Q 80 170 80 130 Z" fill="#1d4ed8"/>
+  <!-- Shield border -->
+  <path d="M 80 100 L 220 100 L 220 130 Q 220 170 150 200 Q 80 170 80 130 Z" stroke="#fbbf24" stroke-width="4" fill="none"/>
+  <!-- Inner border -->
+  <path d="M 92 110 L 208 110 L 208 130 Q 208 162 150 188 Q 92 162 92 130 Z" stroke="#fbbf24" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <!-- Cross emblem -->
+  <rect x="142" y="118" width="16" height="60" fill="#fbbf24"/>
+  <rect x="118" y="138" width="64" height="16" fill="#fbbf24"/>
+  <!-- Star at top -->
+  <polygon points="150,108 153,116 161,116 154,121 157,129 150,124 143,129 146,121 139,116 147,116" fill="#fbbf24"/>
+</svg>
