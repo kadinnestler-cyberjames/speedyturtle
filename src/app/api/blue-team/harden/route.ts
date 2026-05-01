@@ -25,6 +25,21 @@ export async function POST(req: NextRequest) {
 
     const plan = await generateHardeningPlan(scan);
     await saveHardeningPlan(plan);
+
+    // Fire-and-forget the report email. Skips silently when RESEND_API_KEY
+    // is unset; logs other failures without blocking the response.
+    void (async () => {
+      try {
+        const { sendBlueTeamReport } = await import("@/lib/email");
+        const r = await sendBlueTeamReport(scan, plan);
+        if (!r.ok && r.error && !r.error.includes("RESEND_API_KEY not set")) {
+          console.warn("Blue Team report email failed:", r.error);
+        }
+      } catch (err) {
+        console.warn("Blue Team report email crashed:", err);
+      }
+    })();
+
     return NextResponse.json(plan);
   } catch (err) {
     return NextResponse.json(

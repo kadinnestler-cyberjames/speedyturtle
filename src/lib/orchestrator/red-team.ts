@@ -166,5 +166,20 @@ export async function runRedTeamScan(scan: Scan): Promise<Scan> {
     progress: { step: "done", pct: 100, message: "Scan complete." },
   };
   await saveScan(finalScan);
+
+  // Fire-and-forget the email report. We don't await — the report
+  // sending shouldn't gate the scan completion or block the next request.
+  void (async () => {
+    try {
+      const { sendRedTeamReport } = await import("../email");
+      const r = await sendRedTeamReport(finalScan);
+      if (!r.ok && r.error && !r.error.includes("RESEND_API_KEY not set")) {
+        console.warn("Red Team report email failed:", r.error);
+      }
+    } catch (err) {
+      console.warn("Red Team report email crashed:", err);
+    }
+  })();
+
   return finalScan;
 }
