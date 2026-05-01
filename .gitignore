@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python venv for CTI-REALM agent bridge
+.venv-cti-realm/
+scripts/__pycache__/
+
+# Inspect-AI run artifacts (regenerated per run, don't commit logs)
+scripts/inspect-logs/
+data/inspect-logs/

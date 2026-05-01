@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="speedyturtle mark">
+  <title>speedyturtle</title>
+  <!-- Compact mark for favicons + tight nav slots -->
+  <g stroke="#34d399" stroke-linecap="round" fill="none">
+    <line x1="3" y1="30" x2="14" y2="30" stroke-width="2.5"/>
+    <line x1="3" y1="36" x2="16" y2="36" stroke-width="3"/>
+    <line x1="3" y1="42" x2="14" y2="42" stroke-width="2.5"/>
+  </g>
+  <ellipse cx="26" cy="48" rx="4" ry="3" fill="#0f172a"/>
+  <ellipse cx="46" cy="48" rx="4" ry="3" fill="#0f172a"/>
+  <circle cx="54" cy="32" r="6" fill="#1e293b"/>
+  <circle cx="55" cy="30" r="1.4" fill="#f8fafc"/>
+  <ellipse cx="36" cy="38" rx="20" ry="11" fill="#1e293b"/>
+  <path d="M 18 38 A 18 16 0 0 1 54 38 Z" fill="#10b981"/>
+  <path d="M 22 34 Q 32 24 44 28" stroke="#6ee7b7" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <g fill="none" stroke="#064e3b" stroke-width="0.8" opacity="0.6">
+    <polygon points="28,30 33,27 38,30 38,36 33,39 28,36"/>
+    <polygon points="40,30 45,27 50,30 50,36 45,39 40,36"/>
+    <polygon points="34,36 39,33 44,36 44,42 39,45 34,42"/>
+  </g>
+  <path d="M 18 38 A 18 16 0 0 1 54 38" stroke="#064e3b" stroke-width="1.2" fill="none"/>
+</svg>

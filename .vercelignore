@@ -1,0 +1,10 @@
+# Local Python virtualenvs — never deploy these
+.venv*/
+**/__pycache__/
+
+# Local build cache
+.next/cache/
+
+# Misc
+*.log
+.DS_Store

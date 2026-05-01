@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/blue-team/monitor/run",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/benchmark/cti-realm/refresh",
+      "schedule": "0 7 * * *"
+    }
+  ]
+}
