@@ -10,6 +10,27 @@ export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
   try {
+    // Vercel serverless doesn't ship with the scanner CLIs (nuclei, httpx,
+    // subfinder) and has a 5-minute function ceiling that nuclei can't fit
+    // in. We render the public site as a marketing + demo + benchmark surface
+    // and ask operators to self-host for live scans. SPEEDYTURTLE_DEMO_MODE=1
+    // is set in the Vercel project — local dev leaves it unset.
+    if (process.env.SPEEDYTURTLE_DEMO_MODE === "1") {
+      return NextResponse.json(
+        {
+          error: "Live scans are self-hosted only.",
+          why:
+            "speedyturtle's scanner pipeline (nuclei + httpx + subfinder + Claude orchestrator) needs the full toolchain on the host. We don't run live scans on Vercel because the scanners aren't installed there and individual scans exceed the 5-minute serverless ceiling.",
+          alternatives: {
+            seeSampleReport: "/demo",
+            viewBenchmark: "/benchmark/cti-realm",
+            selfHost: "https://github.com/kadinnestler-cyberjames/speedyturtle",
+          },
+        },
+        { status: 503 },
+      );
+    }
+
     const body = await req.json();
     const input = validate(body);
     if (!input.ok) return NextResponse.json({ error: input.error }, { status: 400 });
