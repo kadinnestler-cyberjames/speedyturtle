@@ -38,8 +38,7 @@ export function MermaidDiagram({ code, className }: Props) {
     let cancelled = false;
 
     if (!code || !code.trim()) {
-      setSvg(null);
-      setErrored(false);
+      // The render below early-returns on empty code anyway; nothing to clean up.
       return;
     }
 

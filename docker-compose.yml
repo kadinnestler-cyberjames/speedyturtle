@@ -1,0 +1,67 @@
+# One-command local dev: app + scanners + Juice Shop test target.
+# Usage:
+#   docker compose up
+#   open http://localhost:3000
+#
+# To run a real scan against the bundled Juice Shop (intentionally vulnerable):
+#   - Submit a Red Team scan against `juice-shop:3000` from the UI
+#   - Or:  curl -X POST http://localhost:3000/api/scan \
+#            -H 'Content-Type: application/json' \
+#            -d '{"target":"juice-shop:3000","email":"you@example.com",
+#                 "authorizationConfirmed":true,"mode":"red-team"}'
+#
+# Requires either ANTHROPIC_API_KEY in the environment, or a Claude Code
+# subscription (the orchestrator falls back to `claude -p` if the CLI is on
+# PATH inside the container — for that you'd need a custom Dockerfile, see
+# below).
+
+services:
+  app:
+    image: node:20-bookworm
+    working_dir: /app
+    command: bash -lc "npm ci && npm run dev"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      DATABASE_URL: ${DATABASE_URL:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+    depends_on:
+      - juice-shop
+
+  juice-shop:
+    image: bkimminich/juice-shop:latest
+    ports:
+      - "3001:3000"
+    restart: unless-stopped
+
+  # Scanner toolchain. We use the upstream projectdiscovery images so versions
+  # track the official releases. Mounted shared tmpfs so the speedyturtle
+  # orchestrator can read the JSONL output the scanners produce.
+  nuclei:
+    image: projectdiscovery/nuclei:latest
+    profiles: [scan]
+    volumes:
+      - scanner-tmp:/tmp/speedyturtle
+
+  httpx:
+    image: projectdiscovery/httpx:latest
+    profiles: [scan]
+    volumes:
+      - scanner-tmp:/tmp/speedyturtle
+
+  subfinder:
+    image: projectdiscovery/subfinder:latest
+    profiles: [scan]
+    volumes:
+      - scanner-tmp:/tmp/speedyturtle
+
+volumes:
+  node_modules: {}
+  scanner-tmp: {}

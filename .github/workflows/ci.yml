@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build
+        env:
+          # Skip outbound LLM calls during build — Vercel demo-mode auto-detects
+          # via process.env.VERCEL on prod deploys. Locally + in CI the routes
+          # just need to compile, not execute scans.
+          SPEEDYTURTLE_DEMO_MODE: "1"

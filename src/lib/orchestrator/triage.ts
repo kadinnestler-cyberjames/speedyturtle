@@ -66,7 +66,6 @@ export async function triageFindings(
 }
 
 function fallbackTriage(target: string, findings: Finding[]): NonNullable<Scan["triage"]> {
-  const bySev = countBySeverity(findings);
   const critical = findings.filter((f) => f.severity === "critical");
   const high = findings.filter((f) => f.severity === "high");
   const med = findings.filter((f) => f.severity === "medium");
@@ -90,14 +89,4 @@ function fallbackTriage(target: string, findings: Finding[]): NonNullable<Scan["
   ].filter((s): s is string => s !== null);
 
   return { summary, topRisks, nextSteps };
-}
-
-function countBySeverity(findings: Finding[]) {
-  return findings.reduce(
-    (acc, f) => {
-      acc[f.severity] = (acc[f.severity] ?? 0) + 1;
-      return acc;
-    },
-    {} as Record<Finding["severity"], number>
-  );
 }

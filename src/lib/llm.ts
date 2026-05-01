@@ -95,7 +95,7 @@ async function completeViaCli({ system, user, model }: CompleteOpts): Promise<st
           return reject(new Error(`claude -p reported error: ${parsed.api_error_status ?? "unknown"}`));
         }
         resolve(parsed.result ?? "");
-      } catch (e) {
+      } catch {
         reject(new Error(`Failed to parse claude -p output: ${stdout.slice(0, 500)}`));
       }
     });

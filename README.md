@@ -1,6 +1,13 @@
 # speedyturtle
 
+[![CI](https://github.com/kadinnestler-cyberjames/speedyturtle/actions/workflows/ci.yml/badge.svg)](https://github.com/kadinnestler-cyberjames/speedyturtle/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/kadinnestler-cyberjames/speedyturtle)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/kadinnestler-cyberjames/speedyturtle?style=social)](https://github.com/kadinnestler-cyberjames/speedyturtle/stargazers)
+[![Vercel](https://img.shields.io/badge/deploy-vercel-black?logo=vercel)](https://speedyturtle-khaki.vercel.app)
+
 > Mythos-inspired offensive scanning + blue-team hardening, with a public CTI-REALM scoreboard. Built for businesses that don't have a $50K Snyk contract.
+
+**Live:** https://speedyturtle-khaki.vercel.app
 
 ![Logo](public/logo.svg)
 

@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // speedyturtle additions:
+    "node_modules/**",
+    ".venv-cti-realm/**",
+    "scripts/**",
+    "data/**",
+    "test/juice-shop/**",
   ]),
 ]);
 

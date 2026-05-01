@@ -54,7 +54,7 @@ export default function HomePage() {
         <p className="text-slate-400 mb-10">No commodity scanner. No &quot;AI sprinkled on top.&quot; Real multi-step Claude reasoning that nobody else has productized.</p>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Feat color="emerald" emoji="🛡" title="Validator Subagent" body="Adversarial false-positive filter. Per AISLE 2026, this scaffold pattern alone closes the largest gap between Mythos and other models." />
-          <Feat color="rose" emoji="⚡" title="Exploit Chain Reasoning" body="Claude Opus 4.5 composes multi-step kill chains using Kettle, Orange Tsai, PPP, and APT29 patterns." />
+          <Feat color="rose" emoji="⚡" title="Exploit Chain Reasoning" body="Claude Opus 4.7 composes multi-step kill chains using Kettle, Orange Tsai, PPP, and APT29 patterns." />
           <Feat color="emerald" emoji="✂" title="Cheapest Cut" body="One mitigation that breaks the most chains. Inverts findings list into actionable narrative." />
           <Feat color="purple" emoji="🎭" title="Adversary Persona Simulation" body="APT29 / Lazarus / Sandworm / Scattered Spider / GenericRansomware exposure scoring with dwell time estimates." />
           <Feat color="amber" emoji="📜" title="Vulnerability Genealogy" body="Trace each finding back through history. Show how the bug pattern mutated. Predict the next mutation." />
