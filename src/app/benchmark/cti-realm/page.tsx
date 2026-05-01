@@ -104,7 +104,26 @@ export default async function CtiRealmScoreboardPage() {
       {/* Hero score card */}
       <section className="max-w-5xl mx-auto px-6 pb-10">
         {latest ? (
-          <LatestScoreCard entry={latest} />
+          <>
+            <LatestScoreCard entry={latest} />
+            {latest.score === 0 && (
+              <div className="mt-4 rounded-xl border border-slate-700 bg-slate-900/60 p-5 text-sm text-slate-300">
+                <div className="font-bold text-slate-100 mb-2">Why is it 0.000?</div>
+                <p>
+                  This is the <strong>honest baseline</strong>. We refused to publish a number until the eval
+                  ran end-to-end through our pipeline, and the first run produced 0.000 under explicit
+                  degradations (no-sandbox + grader rate-limited on the OAuth path). The methodology page
+                  enumerates exactly how we&apos;d close the gap to Mythos&apos;s 0.624–0.685: install Docker
+                  + provide a real Anthropic key for the grader checkpoints. Both are documented and
+                  reproducible. We chose to ship the truth instead of waiting for a curated number.
+                </p>
+                <p className="mt-2 text-slate-400 text-xs">
+                  Subscribers to the methodology bias: <em>a low honest score with a real reproduction
+                  path is more useful to other practitioners than a high curated number.</em>
+                </p>
+              </div>
+            )}
+          </>
         ) : (
           <AwaitingFirstRun error={error} missing={missing} />
         )}
