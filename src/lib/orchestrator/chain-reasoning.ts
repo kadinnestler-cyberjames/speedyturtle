@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { complete } from "../llm";
 import type { Finding } from "../types";
 import { heuristicCheapestCut } from "./cheapest-cut-heuristic";
 
@@ -81,17 +81,6 @@ export async function reasonAboutChains(
   target: string,
   findings: Finding[]
 ): Promise<ChainReasoningOutput> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    const h = heuristicCheapestCut(findings);
-    return {
-      chains: h.syntheticChains,
-      cheapestCut: h.cheapestCut,
-      noChainsReason: h.syntheticChains.length === 0
-        ? "ANTHROPIC_API_KEY not set — no patterns matched the heuristic chain library."
-        : "ANTHROPIC_API_KEY not set — chains below were composed by heuristic pattern-match, not Claude. Add the key for full multi-step reasoning.",
-    };
-  }
   if (findings.length < 2) {
     return { chains: [], noChainsReason: "Only one finding — nothing to compose into a chain." };
   }
@@ -115,24 +104,13 @@ export async function reasonAboutChains(
     return { chains: [], noChainsReason: "Not enough findings to compose chains from" };
   }
 
-  const client = new Anthropic({ apiKey });
-
   try {
-    const res = await client.messages.create({
-      model: "claude-opus-4-5-20250929",
-      max_tokens: 4000,
+    const text = await complete({
       system: CHAIN_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `Target: ${target}\n\nFindings (${scoped.length}):\n${JSON.stringify(scoped, null, 2)}\n\nReason about composable attack chains. Return JSON.`,
-        },
-      ],
+      user: `Target: ${target}\n\nFindings (${scoped.length}):\n${JSON.stringify(scoped, null, 2)}\n\nReason about composable attack chains. Return JSON.`,
+      model: "opus",
+      maxTokens: 4000,
     });
-    const text = res.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as { type: "text"; text: string }).text)
-      .join("");
     const m = text.match(/\{[\s\S]*\}/);
     if (m) {
       const parsed = JSON.parse(m[0]);

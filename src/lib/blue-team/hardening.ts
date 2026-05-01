@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { complete } from "../llm";
 import type { Finding, Scan, ExploitChain } from "../types";
 import type {
   HardeningPlan,
@@ -32,13 +32,10 @@ Rules:
 - Output strict JSON only: {"breakpoint": "...", "rationale": "...", "effort": "low|medium|high", "cutsChainAtStep": <step-number-or-null>}`;
 
 export async function generateHardeningPlan(scan: Scan): Promise<HardeningPlan> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  const client = apiKey ? new Anthropic({ apiKey }) : null;
-
   const actionable = scan.findings.filter((f) => f.severity !== "info" || f.category === "subdomain-exposure");
 
-  const patches = await generatePatches(actionable, client);
-  const chainBreakpoints = await generateChainBreakpoints(scan.exploitChains ?? [], client);
+  const patches = await generatePatches(actionable);
+  const chainBreakpoints = await generateChainBreakpoints(scan.exploitChains ?? []);
   const complianceImpact = generateComplianceImpact(actionable);
 
   const quickWins = patches.filter((p) => p.effort === "low" && (p.severity === "high" || p.severity === "critical")).length;
@@ -64,10 +61,7 @@ export async function generateHardeningPlan(scan: Scan): Promise<HardeningPlan> 
   };
 }
 
-async function generatePatches(
-  findings: Finding[],
-  client: Anthropic | null
-): Promise<PatchSuggestion[]> {
+async function generatePatches(findings: Finding[]): Promise<PatchSuggestion[]> {
   const prioritized = [...findings].sort(severityRank);
   const out: PatchSuggestion[] = [];
   let priority = 1;
@@ -78,8 +72,8 @@ async function generatePatches(
     let effort: PatchEffort = "medium";
     let source: PatchSuggestion["source"] = "fallback";
 
-    if (client && priority <= claudeBudget && f.severity !== "info") {
-      const result = await tryClaudePatch(client, f);
+    if (priority <= claudeBudget && f.severity !== "info") {
+      const result = await tryClaudePatch(f);
       if (result) {
         patch = result.patch;
         effort = result.effort;
@@ -110,34 +104,24 @@ async function generatePatches(
 }
 
 async function tryClaudePatch(
-  client: Anthropic,
   finding: Finding
 ): Promise<{ patch: string; effort: PatchEffort } | null> {
   try {
-    const res = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: 600,
+    const text = await complete({
       system: PATCH_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: JSON.stringify({
-            severity: finding.severity,
-            category: finding.category,
-            title: finding.title,
-            description: finding.description?.slice(0, 400),
-            affectedAsset: finding.affectedAsset,
-            cveId: finding.cveId,
-            cvssScore: finding.cvssScore,
-            recommendation: finding.recommendation,
-          }),
-        },
-      ],
+      user: JSON.stringify({
+        severity: finding.severity,
+        category: finding.category,
+        title: finding.title,
+        description: finding.description?.slice(0, 400),
+        affectedAsset: finding.affectedAsset,
+        cveId: finding.cveId,
+        cvssScore: finding.cvssScore,
+        recommendation: finding.recommendation,
+      }),
+      model: "sonnet",
+      maxTokens: 600,
     });
-    const text = res.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as { type: "text"; text: string }).text)
-      .join("");
     const m = text.match(/\{[\s\S]*\}/);
     if (!m) return null;
     const parsed = JSON.parse(m[0]);
@@ -207,28 +191,23 @@ function fallbackPatch(f: Finding): { patch: string; effort: PatchEffort } {
   }
 }
 
-async function generateChainBreakpoints(
-  chains: ExploitChain[],
-  client: Anthropic | null
-): Promise<ChainBreakpoint[]> {
+async function generateChainBreakpoints(chains: ExploitChain[]): Promise<ChainBreakpoint[]> {
   if (chains.length === 0) return [];
   const out: ChainBreakpoint[] = [];
 
   for (const chain of chains) {
-    if (client) {
-      const result = await tryOpusBreakpoint(client, chain);
-      if (result) {
-        out.push({
-          chainId: chain.id,
-          chainTitle: chain.title,
-          breakpoint: result.breakpoint,
-          rationale: result.rationale,
-          effort: result.effort,
-          cutsChainAtStep: result.cutsChainAtStep ?? undefined,
-          source: "opus",
-        });
-        continue;
-      }
+    const result = await tryOpusBreakpoint(chain);
+    if (result) {
+      out.push({
+        chainId: chain.id,
+        chainTitle: chain.title,
+        breakpoint: result.breakpoint,
+        rationale: result.rationale,
+        effort: result.effort,
+        cutsChainAtStep: result.cutsChainAtStep ?? undefined,
+        source: "opus",
+      });
+      continue;
     }
     out.push({
       chainId: chain.id,
@@ -244,31 +223,21 @@ async function generateChainBreakpoints(
 }
 
 async function tryOpusBreakpoint(
-  client: Anthropic,
   chain: ExploitChain
 ): Promise<{ breakpoint: string; rationale: string; effort: PatchEffort; cutsChainAtStep: number | null } | null> {
   try {
-    const res = await client.messages.create({
-      model: "claude-opus-4-5-20250929",
-      max_tokens: 800,
+    const text = await complete({
       system: CHAIN_BP_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: JSON.stringify({
-            title: chain.title,
-            severity: chain.severity,
-            steps: chain.attackChain.map((s) => ({ step: s.step, primitive: s.primitive, description: s.description })),
-            existingBreakpoint: chain.defensiveBreakpoint,
-            whyScannersMiss: chain.whyScannersMiss,
-          }),
-        },
-      ],
+      user: JSON.stringify({
+        title: chain.title,
+        severity: chain.severity,
+        steps: chain.attackChain.map((s) => ({ step: s.step, primitive: s.primitive, description: s.description })),
+        existingBreakpoint: chain.defensiveBreakpoint,
+        whyScannersMiss: chain.whyScannersMiss,
+      }),
+      model: "opus",
+      maxTokens: 800,
     });
-    const text = res.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as { type: "text"; text: string }).text)
-      .join("");
     const m = text.match(/\{[\s\S]*\}/);
     if (!m) return null;
     const parsed = JSON.parse(m[0]);

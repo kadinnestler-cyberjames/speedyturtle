@@ -1,55 +1,42 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="speedyturtle">
-  <title>speedyturtle</title>
-
-  <!-- Speed streaks (motion behind the turtle) -->
-  <g stroke="#34d399" stroke-linecap="round" fill="none" opacity="0.85">
-    <line x1="14"  y1="118" x2="58"  y2="118" stroke-width="6"/>
-    <line x1="6"   y1="138" x2="62"  y2="138" stroke-width="8"/>
-    <line x1="20"  y1="158" x2="56"  y2="158" stroke-width="6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="speedyturtle mascot">
+  <title>speedyturtle · mascot</title>
+  <rect width="256" height="256" fill="#ecfdf5"/>
+  <!-- Speed streaks -->
+  <g stroke="#10b981" stroke-linecap="round" fill="none" opacity="0.6">
+    <line x1="14" y1="118" x2="50" y2="118" stroke-width="5"/>
+    <line x1="6"  y1="138" x2="50" y2="138" stroke-width="7"/>
+    <line x1="14" y1="158" x2="50" y2="158" stroke-width="5"/>
   </g>
-  <g stroke="#34d399" stroke-linecap="round" fill="none" opacity="0.4">
-    <line x1="34" y1="100" x2="66" y2="100" stroke-width="4"/>
-    <line x1="34" y1="176" x2="66" y2="176" stroke-width="4"/>
+  <!-- Tiny feet -->
+  <ellipse cx="118" cy="200" rx="14" ry="10" fill="#86efac"/>
+  <ellipse cx="190" cy="200" rx="14" ry="10" fill="#86efac"/>
+  <!-- Body (chubby) -->
+  <ellipse cx="154" cy="152" rx="62" ry="44" fill="#86efac"/>
+  <!-- Big head -->
+  <circle cx="220" cy="128" r="38" fill="#86efac"/>
+  <!-- Cheeks -->
+  <circle cx="208" cy="140" r="4" fill="#fb7185" opacity="0.5"/>
+  <circle cx="234" cy="140" r="4" fill="#fb7185" opacity="0.5"/>
+  <!-- Big sparkly eyes -->
+  <circle cx="210" cy="124" r="8" fill="#0f172a"/>
+  <circle cx="234" cy="124" r="8" fill="#0f172a"/>
+  <circle cx="213" cy="121" r="3" fill="#f8fafc"/>
+  <circle cx="237" cy="121" r="3" fill="#f8fafc"/>
+  <circle cx="208" cy="127" r="1.5" fill="#f8fafc"/>
+  <circle cx="232" cy="127" r="1.5" fill="#f8fafc"/>
+  <!-- Smile -->
+  <path d="M214 142 Q222 148 230 142" stroke="#0f172a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Shell (rounder, friendlier) -->
+  <path d="M 92 152 A 62 56 0 0 1 216 152 Z" fill="#10b981"/>
+  <!-- Cute hex pattern -->
+  <g fill="#34d399" opacity="0.6">
+    <polygon points="124,134 134,128 144,134 144,146 134,152 124,146"/>
+    <polygon points="148,128 158,122 168,128 168,140 158,146 148,140"/>
+    <polygon points="172,134 182,128 192,134 192,146 182,152 172,146"/>
+    <polygon points="138,148 148,142 158,148 158,160 148,166 138,160"/>
+    <polygon points="162,148 172,142 182,148 182,160 172,166 162,160"/>
   </g>
-
-  <!-- Back legs -->
-  <ellipse cx="100" cy="190" rx="14" ry="10" fill="#0f172a"/>
-  <ellipse cx="200" cy="190" rx="14" ry="10" fill="#0f172a"/>
-
-  <!-- Front legs (peeking) -->
-  <ellipse cx="108" cy="92"  rx="13" ry="9"  fill="#0f172a"/>
-  <ellipse cx="200" cy="92"  rx="13" ry="9"  fill="#0f172a"/>
-
-  <!-- Tail -->
-  <path d="M70 140 L84 134 L84 146 Z" fill="#0f172a"/>
-
-  <!-- Body (under-shell) -->
-  <ellipse cx="150" cy="142" rx="78" ry="40" fill="#1e293b"/>
-
-  <!-- Head -->
-  <circle cx="222" cy="128" r="22" fill="#1e293b"/>
-  <!-- Cute smile -->
-  <path d="M218 138 Q224 142 230 138" stroke="#0f172a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <!-- Eye -->
-  <circle cx="224" cy="120" r="5" fill="#f8fafc"/>
-  <circle cx="225.5" cy="120.5" r="2.6" fill="#0f172a"/>
-  <circle cx="226.5" cy="119" r="1" fill="#f8fafc"/>
-
-  <!-- Shell dome (clipped to top half via path) -->
-  <path d="M 78 142 A 72 64 0 0 1 222 142 Z" fill="#10b981"/>
-
   <!-- Shell highlight -->
-  <path d="M 96 132 Q 130 96 168 102" stroke="#6ee7b7" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.7"/>
-
-  <!-- Hex pattern on shell (security/data motif) -->
-  <g fill="none" stroke="#064e3b" stroke-width="2" opacity="0.55">
-    <polygon points="116,118 128,111 140,118 140,132 128,139 116,132"/>
-    <polygon points="146,128 158,121 170,128 170,142 158,149 146,142"/>
-    <polygon points="176,118 188,111 200,118 200,132 188,139 176,132"/>
-    <polygon points="131,142 143,135 155,142 155,156 143,163 131,156"/>
-    <polygon points="161,142 173,135 185,142 185,156 173,163 161,156"/>
-  </g>
-
-  <!-- Shell rim -->
-  <path d="M 78 142 A 72 64 0 0 1 222 142" stroke="#064e3b" stroke-width="3" fill="none"/>
+  <ellipse cx="125" cy="120" rx="18" ry="6" fill="#a7f3d0" opacity="0.8" transform="rotate(-25 125 120)"/>
+  <path d="M 92 152 A 62 56 0 0 1 216 152" stroke="#047857" stroke-width="3" fill="none"/>
 </svg>

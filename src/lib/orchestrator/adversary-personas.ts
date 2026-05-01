@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { complete } from "../llm";
 import type { Finding } from "../types";
 
 /**
@@ -41,8 +41,7 @@ export async function simulateAdversaries(
   target: string,
   findings: Finding[]
 ): Promise<AdversaryAssessment[]> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey || findings.length === 0) return fallbackAdversaryProfile(findings);
+  if (findings.length === 0) return fallbackAdversaryProfile(findings);
 
   const compact = findings.slice(0, 60).map((f) => ({
     sev: f.severity,
@@ -51,24 +50,13 @@ export async function simulateAdversaries(
     asset: f.affectedAsset,
   }));
 
-  const client = new Anthropic({ apiKey });
-
   try {
-    const res = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: 3500,
+    const text = await complete({
       system: ADVERSARY_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `Target: ${target}\n\nScan findings (${compact.length}):\n${JSON.stringify(compact, null, 2)}\n\nAssess this target against all 5 personas. Return JSON.`,
-        },
-      ],
+      user: `Target: ${target}\n\nScan findings (${compact.length}):\n${JSON.stringify(compact, null, 2)}\n\nAssess this target against all 5 personas. Return JSON.`,
+      model: "sonnet",
+      maxTokens: 3500,
     });
-    const text = res.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as { type: "text"; text: string }).text)
-      .join("");
     const m = text.match(/\{[\s\S]*\}/);
     if (m) {
       const parsed = JSON.parse(m[0]);

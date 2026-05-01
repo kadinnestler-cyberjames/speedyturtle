@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { complete } from "../llm";
 import type { Finding } from "../types";
 import { heuristicGenealogy } from "./genealogy-heuristic";
 
@@ -64,9 +64,6 @@ export type GenealogyOutput = {
 };
 
 export async function traceVulnerabilityGenealogy(findings: Finding[]): Promise<GenealogyOutput> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return heuristicGenealogy(findings);
-
   // Only run on findings with severity >= medium (otherwise tokens wasted on info)
   const candidates = findings
     .filter((f) => f.severity !== "info" && f.severity !== "low")
@@ -83,24 +80,13 @@ export async function traceVulnerabilityGenealogy(findings: Finding[]): Promise<
     desc: f.description?.slice(0, 200),
   }));
 
-  const client = new Anthropic({ apiKey });
-
   try {
-    const res = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: 4000,
+    const text = await complete({
       system: GENEALOGY_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `Findings (${compact.length}):\n${JSON.stringify(compact, null, 2)}\n\nGroup by historical bug pattern + trace lineage. Return JSON.`,
-        },
-      ],
+      user: `Findings (${compact.length}):\n${JSON.stringify(compact, null, 2)}\n\nGroup by historical bug pattern + trace lineage. Return JSON.`,
+      model: "sonnet",
+      maxTokens: 4000,
     });
-    const text = res.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as { type: "text"; text: string }).text)
-      .join("");
     const m = text.match(/\{[\s\S]*\}/);
     if (m) {
       const parsed = JSON.parse(m[0]);

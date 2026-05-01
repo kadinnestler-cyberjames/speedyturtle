@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { complete } from "../llm";
 import type { Finding, Scan } from "../types";
 
 const TRIAGE_SYSTEM = `You are an experienced offensive security engineer (red team) writing a triage summary for a small business owner who is NOT a security person.
@@ -22,11 +22,9 @@ export async function triageFindings(
   target: string,
   findings: Finding[]
 ): Promise<NonNullable<Scan["triage"]>> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey || findings.length === 0) {
+  if (findings.length === 0) {
     return fallbackTriage(target, findings);
   }
-  const client = new Anthropic({ apiKey });
 
   // Compact findings for the prompt
   const compact = findings
@@ -46,21 +44,12 @@ export async function triageFindings(
   }
 
   try {
-    const res = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: 2000,
+    const text = await complete({
       system: TRIAGE_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `Target: ${target}\n\nFindings (${compact.length}, info-level omitted):\n${JSON.stringify(compact, null, 2)}\n\nReturn the JSON.`,
-        },
-      ],
+      user: `Target: ${target}\n\nFindings (${compact.length}, info-level omitted):\n${JSON.stringify(compact, null, 2)}\n\nReturn the JSON.`,
+      model: "sonnet",
+      maxTokens: 2000,
     });
-    const text = res.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as { type: "text"; text: string }).text)
-      .join("");
     const m = text.match(/\{[\s\S]*\}/);
     if (m) {
       const parsed = JSON.parse(m[0]);

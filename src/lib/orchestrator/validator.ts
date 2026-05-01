@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { complete } from "../llm";
 import type { Finding } from "../types";
 
 /**
@@ -55,16 +55,8 @@ export type ValidationResult = {
 };
 
 export async function validateFindings(findings: Finding[]): Promise<ValidationResult> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey || findings.length === 0) {
-    return {
-      verdicts: findings.map((f) => ({
-        findingId: f.id.slice(0, 8),
-        verdict: "needs-review",
-        reasoning: "Validator unavailable (no ANTHROPIC_API_KEY)",
-      })),
-      summary: { validated: 0, falsePositive: 0, needsReview: findings.length },
-    };
+  if (findings.length === 0) {
+    return { verdicts: [], summary: { validated: 0, falsePositive: 0, needsReview: 0 } };
   }
 
   // Only validate non-info findings (info-level not worth the tokens)
@@ -85,24 +77,13 @@ export async function validateFindings(findings: Finding[]): Promise<ValidationR
     evidence: f.evidence?.slice(0, 200),
   }));
 
-  const client = new Anthropic({ apiKey });
-
   try {
-    const res = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: 3500,
+    const text = await complete({
       system: VALIDATOR_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `Validate these ${compact.length} findings:\n\n${JSON.stringify(compact, null, 2)}`,
-        },
-      ],
+      user: `Validate these ${compact.length} findings:\n\n${JSON.stringify(compact, null, 2)}`,
+      model: "sonnet",
+      maxTokens: 3500,
     });
-    const text = res.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as { type: "text"; text: string }).text)
-      .join("");
     const m = text.match(/\{[\s\S]*\}/);
     if (m) {
       const parsed = JSON.parse(m[0]);
