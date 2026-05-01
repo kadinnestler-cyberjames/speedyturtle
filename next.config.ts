@@ -22,11 +22,18 @@ const nextConfig: NextConfig = {
     // beforeFiles: take precedence over the local route handlers (otherwise
     // /api/scan would resolve to the demo-mode 503 in route.ts before the
     // rewrite gets a chance to run).
+    // Only rewrite the API surface. The /scan/[id] result page stays rendered
+    // by Vercel so its _next/static CSS hashes match Vercel's build — the
+    // page itself fetches the scan via /api/scan/[id]/status?full=1 which
+    // hits the worker through the rewrite. Rewriting the page HTML directly
+    // produced a styleless page because the visitor's browser tried to load
+    // the worker's static assets from Vercel.
     return {
       beforeFiles: [
         { source: "/api/scan", destination: `${worker}/api/scan` },
         { source: "/api/scan/:path*", destination: `${worker}/api/scan/:path*` },
-        { source: "/scan/:path*", destination: `${worker}/scan/:path*` },
+        { source: "/api/blue-team/:path*", destination: `${worker}/api/blue-team/:path*` },
+        { source: "/api/pdf/:path*", destination: `${worker}/api/pdf/:path*` },
       ],
       afterFiles: [],
       fallback: [],
