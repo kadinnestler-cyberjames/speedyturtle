@@ -79,11 +79,14 @@ export async function runRedTeamScan(scan: Scan): Promise<Scan> {
   });
   // nuclei also needs URL prefixes, not bare hostnames. Default to https:// fallback.
   const nucleiTargets = liveUrls.length > 0 ? liveUrls : [`https://${target}`];
-  // Include low+ — most real-world surface scans surface low-sev exposures, info-disclosure,
-  // and CVE-tagged "info" templates that matter. Validator subagent will filter false positives.
+  // Drop "info" — those are mostly fingerprint/banner templates that dominate the
+  // template count and produce thousands of low-signal results that the validator
+  // would just filter anyway. Keep low+ to catch real exposures + CVE matches.
+  // Bump ceiling to 15 min so heavy targets (vulnweb-class) don't get SIGTERM'd
+  // mid-scan — a truncated JSONL produces 0 findings, which is worse than waiting.
   const vulns: NucleiFinding[] = await runNuclei(nucleiTargets, {
-    severity: "info,low,medium,high,critical",
-    timeoutMs: 540_000,
+    severity: "low,medium,high,critical",
+    timeoutMs: 900_000,
   });
 
   for (const v of vulns) {
