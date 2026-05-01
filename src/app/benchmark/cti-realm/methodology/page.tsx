@@ -93,10 +93,20 @@ export default function CtiRealmMethodologyPage() {
             speedyturtle-specific ReAct loop implemented in TypeScript at{" "}
             <code className="text-amber-200 text-sm">src/lib/cti-realm/agent.ts</code>. The agent drives
             Claude Opus 4.7 (model literal <code className="text-amber-200 text-sm">claude-opus-4-7</code>)
-            through a tool-use loop using the Anthropic SDK. Tool definitions are NOT defined in the agent
-            — they come in over the stdio bridge from Inspect&apos;s tool registry. That means MITRE,
-            Sigma, and Kusto tools all match the upstream task spec exactly, so our score is directly
-            comparable to Mythos&apos;s published numbers.
+            through a tool-use loop using <code className="text-amber-200 text-sm">@anthropic-ai/claude-agent-sdk</code>{" "}
+            against the operator&apos;s Claude Pro/Max subscription via OAuth — no Anthropic API key
+            required. Tool definitions are NOT defined in the agent — they come in over the stdio bridge
+            from Inspect&apos;s tool registry. That means MITRE, Sigma, and Kusto tools all match the
+            upstream task spec exactly, so our score is directly comparable to Mythos&apos;s published
+            numbers.
+          </p>
+          <p className="text-amber-200/90">
+            <strong>No-API-key path:</strong> the LLM-as-judge grader (C0 + C4) is forced onto an
+            Anthropic model via Inspect AI&apos;s <code className="text-amber-200 text-sm">model_roles</code>{" "}
+            override, and the OAuth access token is pulled from the macOS keychain entry that{" "}
+            <code className="text-amber-200 text-sm">claude /login</code> writes. Both the agent and the
+            scorer therefore bill against the operator&apos;s Claude subscription instead of an Anthropic
+            API key. See <code className="text-amber-200 text-sm">scripts/with-claude-oauth.sh</code>.
           </p>
           <p>
             The bridge is NDJSON-over-stdio. Python (Inspect AI) launches{" "}
