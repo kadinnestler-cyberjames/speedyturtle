@@ -60,12 +60,20 @@ function defaultRecord(email: string): UserBilling {
   };
 }
 
+// Quotas are env-tunable. Set SPEEDYTURTLE_FREE_CAP=0 (or any non-positive
+// number) to disable the limit entirely — useful for Show HN traffic spikes
+// or self-host setups where the operator wants no per-email gating.
 function capForTier(tier: Tier): number | null {
   switch (tier) {
-    case "free":
-      return 1;
-    case "starter":
-      return 10;
+    case "free": {
+      const raw = Number(process.env.SPEEDYTURTLE_FREE_CAP);
+      if (Number.isFinite(raw) && raw <= 0) return null;
+      return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 25;
+    }
+    case "starter": {
+      const raw = Number(process.env.SPEEDYTURTLE_STARTER_CAP);
+      return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 100;
+    }
     case "pro":
     case "unlimited":
       return null;
