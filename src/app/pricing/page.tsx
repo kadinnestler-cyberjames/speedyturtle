@@ -102,6 +102,13 @@ export default function PricingPage({
 }: {
   searchParams?: Promise<{ status?: string }>;
 }) {
+  // Hide the Stripe checkout buttons unless the production server has
+  // STRIPE_SECRET_KEY wired. Without it, the /api/checkout/[tier] route
+  // returns 503 and clicking the button gives the visitor a confusing
+  // error mid-flow. Until you provision Stripe keys, the page falls back
+  // to a "Email me to enroll" mailto link that converts intent into a
+  // qualified inbound rather than a broken checkout.
+  const checkoutAvailable = Boolean(process.env.STRIPE_SECRET_KEY);
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
@@ -165,8 +172,15 @@ export default function PricingPage({
                 >
                   {tier.cta.label}
                 </Link>
-              ) : (
+              ) : checkoutAvailable ? (
                 <CheckoutButton tier={tier.cta.tier} label={tier.cta.label} accent={tier.accent} />
+              ) : (
+                <a
+                  href={`mailto:kadinnestler@uptalk.us?subject=speedyturtle%20${tier.cta.tier}%20tier%20interest`}
+                  className="block text-center w-full px-4 py-3 rounded-lg border border-slate-700 hover:border-slate-500 text-slate-300 font-semibold text-sm"
+                >
+                  Email me to enroll →
+                </a>
               )}
             </div>
           ))}
