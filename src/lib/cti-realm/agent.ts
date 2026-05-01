@@ -180,6 +180,14 @@ export async function runCtiRealmAgent(
     throw new Error("runCtiRealmAgent: tools[] must be a non-empty array of CTI-REALM tool definitions.");
   }
 
+  // Strip Anthropic auth env vars so claude-agent-sdk falls back to the
+  // Claude Code keychain credentials (the only path that actually works
+  // for OAuth /v1/messages today). Inspect AI's parent process still has
+  // these set in its OWN env for its scorer; child env mutations don't
+  // propagate up.
+  delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.ANTHROPIC_AUTH_TOKEN;
+
   // claude-agent-sdk rejects duplicate tool names in a single MCP server.
   // inspect-ai's tool registry occasionally surfaces the same tool twice
   // (variant overloads, decorator vs metadata) and at least one collides

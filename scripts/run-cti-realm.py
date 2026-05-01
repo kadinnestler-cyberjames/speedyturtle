@@ -558,6 +558,7 @@ def main() -> int:
     parser.add_argument("--no-sandbox", action="store_true", help="Run without Docker (default: respect task spec)")
     parser.add_argument("--smoke", action="store_true", help="Smoke-test the plumbing (1 sample, no scoring)")
     parser.add_argument("--model", default="claude-opus-4-7", help="Model literal passed to the TS agent")
+    parser.add_argument("--grader-model", default="claude-sonnet-4-6", help="Anthropic model used as the LLM-as-judge grader (C0 + C4). Default keeps the cost low while still using an Anthropic model so OAuth subscription auth applies.")
     parser.add_argument("--max-iterations", type=int, default=25)
     args = parser.parse_args()
 
@@ -591,6 +592,12 @@ def main() -> int:
         "tasks": task_factory(),
         "log_dir": str(INSPECT_LOG_DIR),
         "model": f"anthropic/{args.model}",  # placeholder — solver bypasses Inspect's model dispatch
+        # Force the LLM-as-judge grader (C0 and C4) onto an Anthropic model
+        # instead of the upstream default (openai/azure/gpt-5-mini). With
+        # ANTHROPIC_AUTH_TOKEN set, the grader's API calls go through the
+        # OAuth path and bill against the operator's Claude subscription
+        # instead of requiring an Anthropic API key.
+        "model_roles": {"grader": f"anthropic/{args.grader_model}"},
     }
     if args.limit is not None:
         eval_kwargs["limit"] = args.limit
