@@ -7,6 +7,7 @@ import {
 } from "@/lib/blue-team/compliance";
 import { loadScan } from "@/lib/store";
 import { ComplianceCoverageView } from "@/components/ComplianceCoverageView";
+import { Logo } from "@/components/Logo";
 import type { Finding } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export default async function CompliancePage({
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-slate-800">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="font-bold tracking-tight">🐢 <span className="text-emerald-400">speedyturtle</span></Link>
+          <Link href="/" className="font-bold tracking-tight flex items-center gap-2"><Logo size={28} /><span className="text-emerald-400">speedyturtle</span></Link>
           <nav className="flex gap-5 text-sm">
             <Link href="/red-team" className="text-slate-300 hover:text-white">Red Team</Link>
             <Link href="/blue-team" className="text-slate-300 hover:text-white">Blue Team</Link>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CheckoutButton } from "@/components/CheckoutButton";
+import { Logo } from "@/components/Logo";
 
 type PaidTier = "starter" | "pro" | "unlimited";
 
@@ -104,8 +105,9 @@ export default function PricingPage({
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
-        <Link href="/" className="font-bold text-xl tracking-tight">
-          🐢 <span className="text-emerald-400">speedyturtle</span>
+        <Link href="/" className="font-bold text-xl tracking-tight flex items-center gap-2">
+          <Logo size={32} />
+          <span className="text-emerald-400">speedyturtle</span>
         </Link>
         <nav className="flex gap-6 text-sm items-center">
           <Link href="/red-team" className="text-slate-300 hover:text-white">Red Team</Link>
