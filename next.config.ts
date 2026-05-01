@@ -19,11 +19,18 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const worker = process.env.SPEEDYTURTLE_WORKER_URL?.replace(/\/$/, "");
     if (!worker) return [];
-    return [
-      { source: "/api/scan", destination: `${worker}/api/scan` },
-      { source: "/api/scan/:path*", destination: `${worker}/api/scan/:path*` },
-      { source: "/scan/:path*", destination: `${worker}/scan/:path*` },
-    ];
+    // beforeFiles: take precedence over the local route handlers (otherwise
+    // /api/scan would resolve to the demo-mode 503 in route.ts before the
+    // rewrite gets a chance to run).
+    return {
+      beforeFiles: [
+        { source: "/api/scan", destination: `${worker}/api/scan` },
+        { source: "/api/scan/:path*", destination: `${worker}/api/scan/:path*` },
+        { source: "/scan/:path*", destination: `${worker}/scan/:path*` },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
   },
 };
 
