@@ -126,6 +126,41 @@ def _resolve_node_bin() -> tuple[str, str]:
     return node, npx
 
 
+def _try_load_oauth_from_keychain() -> str | None:
+    """On macOS, pull the Claude Code OAuth access token from the keychain
+    entry that `claude /login` writes. Returns None on any failure (wrong
+    OS, keychain locked, no entry, malformed payload). The caller should
+    treat None as "no token found" and continue with whatever path the
+    operator has manually configured.
+
+    This is a friction-reducer: without it, every CTI-REALM run requires
+    the operator to wrap their command with scripts/with-claude-oauth.sh.
+    With it, `./scripts/run-cti-realm.py` Just Works for anyone who's
+    logged into the Claude CLI.
+    """
+    if sys.platform != "darwin":
+        return None
+    if not shutil.which("security"):
+        return None
+    try:
+        raw = subprocess.run(
+            ["security", "find-generic-password", "-w", "-s", "Claude Code-credentials"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout.strip()
+        if not raw:
+            return None
+        payload = json.loads(raw)
+        token = (payload.get("claudeAiOauth") or {}).get("accessToken")
+        if isinstance(token, str) and token.startswith("sk-ant-oat"):
+            return token
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError):
+        return None
+    return None
+
+
 def _check_api_key() -> None:
     """Warn if ANTHROPIC_API_KEY is missing.
 
@@ -139,13 +174,28 @@ def _check_api_key() -> None:
     We do NOT mock benchmark scores — see the ticket spec.
     """
     key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-    if not key:
+    auth_token = os.environ.get("ANTHROPIC_AUTH_TOKEN", "").strip()
+    if not key and not auth_token:
+        # Try to silently pick up the OAuth token from the macOS keychain
+        # before falling back to the warning. If we find one, set it as
+        # ANTHROPIC_AUTH_TOKEN — inspect-ai's anthropic provider already
+        # prefers this over ANTHROPIC_API_KEY when present.
+        oauth = _try_load_oauth_from_keychain()
+        if oauth:
+            os.environ["ANTHROPIC_AUTH_TOKEN"] = oauth
+            sys.stderr.write(
+                "[run-cti-realm] No API key set. Auto-loaded Claude Code "
+                "OAuth token from macOS keychain — inspect-ai will use the "
+                "operator's Claude Pro/Max subscription via the "
+                "oauth-2025-04-20 beta header.\n"
+            )
+            return
         sys.stderr.write(
-            "[run-cti-realm] ANTHROPIC_API_KEY not set. The agent loop will "
-            "use the Claude Code subscription via claude-agent-sdk. The "
-            "scorer's C4 (Detection Quality) checkpoint requires an Anthropic "
-            "key and will be marked N/A — published score will reflect "
-            "C0-C3 only.\n"
+            "[run-cti-realm] ANTHROPIC_API_KEY and ANTHROPIC_AUTH_TOKEN are "
+            "both unset and no Claude Code OAuth token was found in the "
+            "keychain. The agent loop will use claude-agent-sdk's keychain "
+            "lookup, but inspect-ai's scorer will fail. Either run `claude "
+            "/login` first, or export ANTHROPIC_API_KEY.\n"
         )
         return
     if not key.startswith("sk-"):
