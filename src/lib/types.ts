@@ -13,6 +13,8 @@ export type ScanInput = {
 
 export type Finding = {
   id: string;
+  /** Stable short ID for citation in remediation tickets — e.g., ST-RX-001. */
+  findingId?: string;
   severity: Severity;
   category:
     | "subdomain-exposure"
@@ -21,15 +23,30 @@ export type Finding = {
     | "misconfig"
     | "tls"
     | "info-disclosure"
-    | "credential-exposure";
+    | "credential-exposure"
+    | "email-auth"
+    | "network-exposure"
+    | "breach-exposure"
+    | "domain-hygiene";
   title: string;
   description: string;
+  /** Plain-English answer to "What does this mean for my business?" — set by Claude triage when running. */
+  whatItMeans?: string;
+  /** Plain-English worst-case scenario if ignored. */
+  ifIgnored?: string;
   evidence?: string;
   affectedAsset: string;
-  scanner: "subfinder" | "httpx" | "nuclei" | "claude-triage";
+  scanner: "subfinder" | "httpx" | "nuclei" | "claude-triage" | "dns-auth" | "shodan-internetdb" | "hibp" | "rdap";
   recommendation?: string;
+  /** Two-horizon recommendation split (TOB / NCC pattern). */
+  shortTermFix?: string;
+  longTermFix?: string;
   cveId?: string;
   cvssScore?: number;
+  /** MITRE ATT&CK technique IDs the finding maps to (e.g. ["T1566", "T1078"]). */
+  mitreTechniques?: string[];
+  /** Reference URLs (CVE, NIST, vendor advisory). */
+  references?: { url: string; label?: string }[];
 };
 
 export type ScanProgress = {

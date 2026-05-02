@@ -1,6 +1,10 @@
 import { runSubfinder } from "../scanners/subfinder";
 import { runHttpx } from "../scanners/httpx";
 import { runNuclei, type NucleiFinding } from "../scanners/nuclei";
+import { runEmailAuthScan } from "../scanners/email-auth";
+import { runShodanScan } from "../scanners/shodan-internetdb";
+import { runHibpScan } from "../scanners/hibp";
+import { runRdapScan } from "../scanners/rdap";
 import { triageFindings } from "./triage";
 import { reasonAboutChains } from "./chain-reasoning";
 import { simulateAdversaries } from "./adversary-personas";
@@ -101,6 +105,85 @@ export async function runRedTeamScan(scan: Scan): Promise<Scan> {
       evidence: v.reference?.join("\n"),
       cveId: v.cveId,
       cvssScore: v.cvssScore,
+    });
+  }
+
+  // Step 3b — Domain & email posture (cheap, parallel, high-signal). These run
+  // even when nuclei produces nothing, which is the common case for sites
+  // sitting behind Cloudflare like roxannestaqueria.com — turning a "0 findings"
+  // empty report into a substantive one.
+  await updateScanProgress(scan.id, {
+    step: "nuclei",
+    pct: 62,
+    message: "Checking domain posture: SPF/DKIM/DMARC, exposed ports, breach exposure, registrar lock…",
+  });
+  const [emailAuth, shodan, hibp, rdap] = await Promise.all([
+    runEmailAuthScan(target).catch(() => []),
+    runShodanScan(target).catch(() => []),
+    runHibpScan(target).catch(() => []),
+    runRdapScan(target).catch(() => []),
+  ]);
+
+  for (const f of emailAuth) {
+    findings.push({
+      id: randomUUID(),
+      severity: f.severity,
+      category: f.category,
+      title: f.title,
+      description: f.description,
+      recommendation: f.recommendation,
+      shortTermFix: f.shortTermFix,
+      longTermFix: f.longTermFix,
+      affectedAsset: f.affectedAsset,
+      scanner: "dns-auth",
+      evidence: f.evidence,
+    });
+  }
+  for (const f of shodan) {
+    findings.push({
+      id: randomUUID(),
+      severity: f.severity,
+      category: f.category,
+      title: f.title,
+      description: f.description,
+      recommendation: f.recommendation,
+      shortTermFix: f.shortTermFix,
+      longTermFix: f.longTermFix,
+      affectedAsset: f.affectedAsset,
+      scanner: "shodan-internetdb",
+      evidence: f.evidence,
+      cveId: f.cveId,
+      cvssScore: f.cvssScore,
+    });
+  }
+  for (const f of hibp) {
+    findings.push({
+      id: randomUUID(),
+      severity: f.severity,
+      category: f.category,
+      title: f.title,
+      description: f.description,
+      recommendation: f.recommendation,
+      shortTermFix: f.shortTermFix,
+      longTermFix: f.longTermFix,
+      affectedAsset: f.affectedAsset,
+      scanner: "hibp",
+      evidence: f.evidence,
+    });
+  }
+  for (const f of rdap) {
+    findings.push({
+      id: randomUUID(),
+      severity: f.severity,
+      category: f.category,
+      title: f.title,
+      description: f.description,
+      recommendation: f.recommendation,
+      shortTermFix: f.shortTermFix,
+      longTermFix: f.longTermFix,
+      affectedAsset: f.affectedAsset,
+      scanner: "rdap",
+      evidence: f.evidence,
     });
   }
 
