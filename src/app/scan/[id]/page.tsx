@@ -18,17 +18,17 @@ async function fetchScan(id: string): Promise<Scan | null> {
   // /api/scan/* is rewritten to a self-hosted worker via SPEEDYTURTLE_WORKER_URL,
   // this is how the result page gets the actual scan data — Vercel's process
   // doesn't have it but the worker does. The page itself stays rendered by
-  // Vercel so its CSS hashes match Vercel's bundle (the previous attempt to
-  // rewrite the whole /scan/* path produced a styleless page because the
-  // browser couldn't resolve the worker's _next/static asset paths).
+  // Vercel so its CSS hashes match Vercel's bundle.
+  //
+  // Prefer NEXT_PUBLIC_BASE_URL as the fetch origin so we never trust an
+  // untrusted Host header. Only fall back to the request's host when the
+  // env var isn't set AND the host is in a small allowlist (vercel.app,
+  // localhost). An attacker who could forge a Host header otherwise gets
+  // our SSR fetch redirected at their server.
+  const base = await resolveBaseUrl();
+  if (!base) return null;
   try {
-    const h = await headers();
-    const host = h.get("host");
-    const proto = h.get("x-forwarded-proto") ?? "https";
-    if (!host) return null;
-    const res = await fetch(`${proto}://${host}/api/scan/${id}/status?full=1`, {
-      cache: "no-store",
-    });
+    const res = await fetch(`${base}/api/scan/${id}/status?full=1`, { cache: "no-store" });
     if (!res.ok) return null;
     const data = (await res.json()) as Scan | { status: "not-found" };
     if ("status" in data && data.status === "not-found") return null;
@@ -37,6 +37,23 @@ async function fetchScan(id: string): Promise<Scan | null> {
   } catch {
     return null;
   }
+}
+
+const HOST_ALLOWLIST = [
+  /\.vercel\.app$/,
+  /^localhost(?::\d+)?$/,
+  /^127\.0\.0\.1(?::\d+)?$/,
+];
+
+async function resolveBaseUrl(): Promise<string | null> {
+  const envBase = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "");
+  if (envBase) return envBase;
+  const h = await headers();
+  const host = h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  if (!host) return null;
+  if (!HOST_ALLOWLIST.some((rx) => rx.test(host))) return null;
+  return `${proto}://${host}`;
 }
 
 export default async function ScanPage({ params }: { params: Promise<{ id: string }> }) {

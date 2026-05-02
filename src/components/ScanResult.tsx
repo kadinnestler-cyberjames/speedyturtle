@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Scan, Severity } from "@/lib/types";
 import { MermaidDiagram } from "./MermaidDiagram";
+import { ClientTimestamp } from "./ClientTimestamp";
 
 const SEV_COLOR: Record<Severity, string> = {
   critical: "bg-rose-500 text-white",
@@ -92,7 +93,7 @@ export function ScanResult({ scanId, initialScan }: { scanId: string; initialSca
             </div>
             <h1 className="text-2xl font-bold">{scan.input.target}</h1>
             <p className="text-sm text-slate-400 mt-1">
-              {new Date(scan.createdAt).toLocaleString()} · {scan.findings.length} findings
+              <ClientTimestamp iso={scan.createdAt} /> · {scan.findings.length} findings
             </p>
           </div>
           {scan.status === "ready" && (

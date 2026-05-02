@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Scan, Severity } from "@/lib/types";
+import { ClientTimestamp } from "./ClientTimestamp";
 import type {
   HardeningPlan,
   PatchSuggestion,
@@ -99,7 +100,7 @@ export function HardeningPlanView({
             <div className="text-xs uppercase tracking-wider text-sky-400 font-semibold mb-1">🔵 Blue Team — Hardening Plan</div>
             <h1 className="text-2xl font-bold">{scan.input.target}</h1>
             <p className="text-sm text-slate-400 mt-1">
-              Scan: {new Date(scan.createdAt).toLocaleString()} · {scan.findings.length} findings
+              Scan: <ClientTimestamp iso={scan.createdAt} /> · {scan.findings.length} findings
             </p>
           </div>
           <div className="flex gap-2">
