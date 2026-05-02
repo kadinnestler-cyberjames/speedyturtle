@@ -117,6 +117,26 @@ export function PdfReport({ scan }: { scan: Scan }) {
           <Text style={{ fontSize: 18, fontWeight: 700 }}>{scan.findings.length}</Text>
           <Text style={styles.small}>{summaryCounts}</Text>
         </View>
+        {scan.cyberHealthRating && (
+          <View style={{ marginBottom: 16, padding: 14, backgroundColor: "#fffbeb", borderRadius: 4, borderLeft: "4 solid #f59e0b" }}>
+            <Text style={{ fontSize: 9, color: "#92400e", fontWeight: 700, marginBottom: 4 }}>CYBER HEALTH RATING (INSURANCE UNDERWRITER VIEW)</Text>
+            <Text style={{ fontSize: 36, fontWeight: 700, color: "#78350f", marginBottom: 2 }}>{scan.cyberHealthRating.score}<Text style={{ fontSize: 14, color: "#a16207" }}>/100</Text></Text>
+            <Text style={{ fontSize: 10, fontWeight: 700, color: "#78350f", textTransform: "uppercase", marginBottom: 4 }}>{scan.cyberHealthRating.band}</Text>
+            <Text style={{ fontSize: 9, color: "#451a03", lineHeight: 1.4 }}>{scan.cyberHealthRating.rationale}</Text>
+          </View>
+        )}
+        {scan.drift && (
+          <View style={{ marginBottom: 16, padding: 10, backgroundColor: "#eff6ff", borderRadius: 4, borderLeft: "3 solid #3b82f6" }}>
+            <Text style={{ fontSize: 9, color: "#1e40af", fontWeight: 700, marginBottom: 4 }}>SINCE LAST SCAN</Text>
+            <Text style={{ fontSize: 10, color: "#1e3a8a" }}>
+              <Text style={{ color: "#dc2626", fontWeight: 700 }}>{scan.drift.newFindings} new</Text>
+              <Text>  ·  </Text>
+              <Text style={{ color: "#16a34a", fontWeight: 700 }}>{scan.drift.fixedFindings} fixed</Text>
+              <Text>  ·  </Text>
+              <Text style={{ color: "#d97706", fontWeight: 700 }}>{scan.drift.persistingFindings} still open</Text>
+            </Text>
+          </View>
+        )}
         {scan.validation && (
           <View style={{ marginBottom: 16, padding: 12, backgroundColor: "#ecfdf5", borderRadius: 4, borderLeft: "3 solid #10b981" }}>
             <Text style={{ fontSize: 10, color: "#047857", fontWeight: 700, marginBottom: 6 }}>VALIDATOR SUBAGENT</Text>

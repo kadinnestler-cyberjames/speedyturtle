@@ -99,6 +99,21 @@ export type Scan = {
   exploitChainsNote?: string;
   overallAttackTree?: string;
   cheapestCut?: CheapestCut | null;
+  /** Cyber Health Rating 0-100 + insurability band — Coalition pattern. */
+  cyberHealthRating?: {
+    score: number;
+    band: "preferred" | "standard" | "subprime" | "declined";
+    rationale: string;
+  };
+  /** Drift vs prior scan of the same target+email. Populated by orchestrator if a prior scan exists. */
+  drift?: {
+    priorScanId: string;
+    priorScanAt: string;
+    newFindings: number;
+    fixedFindings: number;
+    persistingFindings: number;
+    netDelta: number; // negative = improved
+  };
   adversaryProfile?: AdversaryAssessment[];
   validation?: {
     verdicts: { findingId: string; verdict: "validated" | "false-positive" | "needs-review"; reasoning: string; manualCheckNeeded?: string }[];

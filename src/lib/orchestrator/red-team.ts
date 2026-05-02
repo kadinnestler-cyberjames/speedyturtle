@@ -13,7 +13,7 @@ import { validateFindings } from "./validator";
 import { traceVulnerabilityGenealogy } from "./genealogy";
 import type { Finding, Scan } from "../types";
 import { randomUUID } from "node:crypto";
-import { saveScan, updateScanProgress } from "../store";
+import { saveScan, updateScanProgress, listScans } from "../store";
 
 export async function runRedTeamScan(scan: Scan): Promise<Scan> {
   const start = Date.now();
@@ -292,6 +292,69 @@ export async function runRedTeamScan(scan: Scan): Promise<Scan> {
     }
   }
 
+  // ── Cyber Health Rating (Coalition pattern) ─────────────────────────────
+  // 100-point scale, deductions per non-info finding by severity. Capped at 0.
+  // Bands map to insurance underwriting language a small-business owner would
+  // recognize. The exact numeric thresholds are calibrated to produce
+  // realistic 60-90 scores for typical SMBs sitting behind Cloudflare with
+  // no critical findings — the goal is "useful gradient", not "drama".
+  const sevCounts = (sev: typeof findings[number]["severity"]) =>
+    findings.filter((f) => f.severity === sev).length;
+  const rawScore =
+    100 - sevCounts("critical") * 25 - sevCounts("high") * 12 - sevCounts("medium") * 4 - sevCounts("low") * 1;
+  const score = Math.max(0, Math.min(100, Math.round(rawScore)));
+  const band: "preferred" | "standard" | "subprime" | "declined" =
+    score >= 80 ? "preferred" : score >= 60 ? "standard" : score >= 40 ? "subprime" : "declined";
+  const rationale =
+    band === "preferred"
+      ? `Score ${score}/100 — Preferred. No critical or high-severity findings open; observed defenses (CDN/WAF when present) handle the bulk of automated traffic. An insurance underwriter would price you in their lowest-risk tier.`
+      : band === "standard"
+      ? `Score ${score}/100 — Standard. Some medium-severity findings open. Underwriters would treat this as their median SMB risk profile — coverage available at standard premiums.`
+      : band === "subprime"
+      ? `Score ${score}/100 — Subprime. Multiple high-severity findings or one critical. Underwriters will likely require remediation of named issues before binding coverage; expect a 50-100% premium load.`
+      : `Score ${score}/100 — Declined. Critical findings outstanding. Most SMB cyber-insurance carriers will decline at this score. Address criticals before requesting new quotes.`;
+
+  // ── Drift detection vs prior scan (same target + same email) ──────────
+  let drift: Scan["drift"] | undefined;
+  try {
+    const prior = (await listScans())
+      .filter(
+        (s) =>
+          s.id !== scan.id &&
+          s.input.target === scan.input.target &&
+          s.input.email === scan.input.email &&
+          s.status === "ready",
+      )
+      .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
+      .find(() => true);
+    if (prior) {
+      const fingerprint = (f: Finding) =>
+        f.findingId ?? `${f.category}|${f.affectedAsset}|${(f.title ?? "").slice(0, 80)}`;
+      const priorFp = new Set(prior.findings.map(fingerprint));
+      const nowFp = new Set(findings.map(fingerprint));
+      let newCount = 0;
+      let persistingCount = 0;
+      let fixedCount = 0;
+      for (const f of nowFp) {
+        if (priorFp.has(f)) persistingCount++;
+        else newCount++;
+      }
+      for (const f of priorFp) {
+        if (!nowFp.has(f)) fixedCount++;
+      }
+      drift = {
+        priorScanId: prior.id,
+        priorScanAt: prior.createdAt ?? new Date().toISOString(),
+        newFindings: newCount,
+        fixedFindings: fixedCount,
+        persistingFindings: persistingCount,
+        netDelta: newCount - fixedCount,
+      };
+    }
+  } catch {
+    // Drift is opportunistic; never fail the scan over it.
+  }
+
   const finalScan: Scan = {
     ...scan,
     findings,
@@ -301,6 +364,8 @@ export async function runRedTeamScan(scan: Scan): Promise<Scan> {
     exploitChainsNote: chainResult.noChainsReason ?? undefined,
     overallAttackTree: chainResult.overallAttackTree,
     cheapestCut: chainResult.cheapestCut,
+    cyberHealthRating: { score, band, rationale },
+    drift,
     adversaryProfile,
     genealogy,
     status: "ready",

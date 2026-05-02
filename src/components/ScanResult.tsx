@@ -107,6 +107,99 @@ export function ScanResult({ scanId, initialScan }: { scanId: string; initialSca
         </div>
       </header>
 
+      {scan.cyberHealthRating && (
+        <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <div className="flex items-baseline justify-between gap-4 flex-wrap mb-3">
+            <div>
+              <div className="text-xs uppercase tracking-wider text-amber-400 font-semibold">
+                CYBER HEALTH RATING
+              </div>
+              <h2 className="text-lg font-bold mt-1">Insurance underwriter view</h2>
+            </div>
+            <span className="text-xs text-slate-400">Coalition / At-Bay style scoring</span>
+          </div>
+          <div className="flex items-end gap-6 flex-wrap">
+            <div>
+              <div className="text-7xl font-bold font-mono text-amber-300 leading-none">{scan.cyberHealthRating.score}</div>
+              <div className="text-xs text-slate-400 mt-1">/ 100</div>
+            </div>
+            <div className="flex-1 min-w-[300px]">
+              {(() => {
+                const score = scan.cyberHealthRating!.score;
+                const band = scan.cyberHealthRating!.band;
+                const bandColors: Record<typeof band, string> = {
+                  preferred: "from-emerald-500 to-emerald-300",
+                  standard: "from-amber-500 to-amber-300",
+                  subprime: "from-orange-500 to-rose-400",
+                  declined: "from-rose-500 to-rose-700",
+                };
+                const bandText: Record<typeof band, string> = {
+                  preferred: "Preferred · lowest-risk tier",
+                  standard: "Standard · median SMB risk",
+                  subprime: "Subprime · remediation required",
+                  declined: "Declined · most carriers will not bind",
+                };
+                return (
+                  <>
+                    <div className="relative h-3 rounded-full bg-slate-800 overflow-hidden mb-2">
+                      <div
+                        className={`absolute inset-y-0 left-0 bg-gradient-to-r ${bandColors[band]}`}
+                        style={{ width: `${score}%` }}
+                      />
+                      <div
+                        className="absolute top-0 bottom-0 w-0.5 bg-slate-200"
+                        style={{ left: `${score}%`, transform: "translateX(-50%)" }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-wider mb-3">
+                      <span>0 declined</span>
+                      <span>40 subprime</span>
+                      <span>60 standard</span>
+                      <span>80 preferred</span>
+                      <span>100</span>
+                    </div>
+                    <div className="text-sm font-semibold text-slate-100 mb-1">{bandText[band]}</div>
+                    <p className="text-sm text-slate-300">{scan.cyberHealthRating!.rationale}</p>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {scan.drift && (
+        <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <div className="flex items-baseline justify-between gap-2 flex-wrap mb-3">
+            <div>
+              <div className="text-xs uppercase tracking-wider text-sky-400 font-semibold">
+                📊 SINCE LAST SCAN
+              </div>
+              <h2 className="text-lg font-bold mt-1">
+                Posture trend — {scan.drift.netDelta < 0 ? "improved" : scan.drift.netDelta > 0 ? "regressed" : "unchanged"}
+              </h2>
+            </div>
+            <span className="text-xs text-slate-400">
+              vs <ClientTimestamp iso={scan.drift.priorScanAt} />
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 text-center">
+              <div className="text-3xl font-bold font-mono text-rose-300">{scan.drift.newFindings}</div>
+              <div className="text-xs text-rose-400/80 mt-1 uppercase tracking-wider">New since last scan</div>
+            </div>
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-center">
+              <div className="text-3xl font-bold font-mono text-emerald-300">{scan.drift.fixedFindings}</div>
+              <div className="text-xs text-emerald-400/80 mt-1 uppercase tracking-wider">Fixed since last scan</div>
+            </div>
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-center">
+              <div className="text-3xl font-bold font-mono text-amber-300">{scan.drift.persistingFindings}</div>
+              <div className="text-xs text-amber-400/80 mt-1 uppercase tracking-wider">Still open</div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {isRunning && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-3">
