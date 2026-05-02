@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BlueTeamLookupForm } from "@/components/BlueTeamLookupForm";
+import { BlueTeamScanForm } from "@/components/BlueTeamScanForm";
 import { Logo } from "@/components/Logo";
 
 export default function BlueTeamPage() {
@@ -40,8 +41,22 @@ export default function BlueTeamPage() {
         </div>
       </section>
 
+      {/* Submit-a-new-scan form on the landing page so visitors can start
+          immediately, mirroring the /red-team UX. The /blue-team/scan page
+          remains for the bookmarked-deep-link flow. */}
+      <section className="max-w-3xl mx-auto px-6 pb-8">
+        <BlueTeamScanForm />
+      </section>
+
       <section className="max-w-3xl mx-auto px-6 pb-12">
-        <BlueTeamLookupForm />
+        <details className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+          <summary className="cursor-pointer text-sm text-slate-300 hover:text-white">
+            Already have a scan ID? Look it up →
+          </summary>
+          <div className="mt-4">
+            <BlueTeamLookupForm />
+          </div>
+        </details>
       </section>
 
       <section className="max-w-6xl mx-auto px-6 py-12">
