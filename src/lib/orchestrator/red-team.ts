@@ -5,6 +5,7 @@ import { runEmailAuthScan } from "../scanners/email-auth";
 import { runShodanScan } from "../scanners/shodan-internetdb";
 import { runHibpScan } from "../scanners/hibp";
 import { runRdapScan } from "../scanners/rdap";
+import { runCrtScan } from "../scanners/crt-sh";
 import { triageFindings } from "./triage";
 import { reasonAboutChains } from "./chain-reasoning";
 import { simulateAdversaries } from "./adversary-personas";
@@ -117,12 +118,33 @@ export async function runRedTeamScan(scan: Scan): Promise<Scan> {
     pct: 62,
     message: "Checking domain posture: SPF/DKIM/DMARC, exposed ports, breach exposure, registrar lock…",
   });
-  const [emailAuth, shodan, hibp, rdap] = await Promise.all([
-    runEmailAuthScan(target).catch(() => []),
-    runShodanScan(target).catch(() => []),
-    runHibpScan(target).catch(() => []),
-    runRdapScan(target).catch(() => []),
+  // Promise.allSettled so a single slow/erroring upstream can't take down the
+  // whole posture pass. Each scanner reports its own status — surfaced in the
+  // report so a "0 findings" doesn't get confused with "scanner failed."
+  const knownHosts = Array.from(probeHostSet);
+  const settled = await Promise.allSettled([
+    runEmailAuthScan(target),
+    runShodanScan(target),
+    runHibpScan(target),
+    runRdapScan(target),
+    runCrtScan(target, knownHosts),
   ]);
+  const scannerNames = ["email-auth", "shodan-internetdb", "hibp", "rdap", "crt-sh"] as const;
+  const scannerStatus: Record<string, "ok" | "error"> = {};
+  const [emailAuthRes, shodanRes, hibpRes, rdapRes, crtRes] = settled.map((s, i) => {
+    if (s.status === "fulfilled") {
+      scannerStatus[scannerNames[i]] = "ok";
+      return s.value;
+    }
+    console.warn(`[scanner ${scannerNames[i]}] failed:`, s.reason);
+    scannerStatus[scannerNames[i]] = "error";
+    return [];
+  });
+  const emailAuth = emailAuthRes as Awaited<ReturnType<typeof runEmailAuthScan>>;
+  const shodan = shodanRes as Awaited<ReturnType<typeof runShodanScan>>;
+  const hibp = hibpRes as Awaited<ReturnType<typeof runHibpScan>>;
+  const rdap = rdapRes as Awaited<ReturnType<typeof runRdapScan>>;
+  const crt = crtRes as Awaited<ReturnType<typeof runCrtScan>>;
 
   for (const f of emailAuth) {
     findings.push({
@@ -186,6 +208,21 @@ export async function runRedTeamScan(scan: Scan): Promise<Scan> {
       evidence: f.evidence,
     });
   }
+  for (const f of crt) {
+    findings.push({
+      id: randomUUID(),
+      severity: f.severity,
+      category: f.category,
+      title: f.title,
+      description: f.description,
+      recommendation: f.recommendation,
+      shortTermFix: f.shortTermFix,
+      longTermFix: f.longTermFix,
+      affectedAsset: f.affectedAsset,
+      scanner: "subfinder",
+      evidence: f.evidence,
+    });
+  }
 
   // Step 4a — Validator subagent (Mythos scaffold pattern: disprove findings before triage)
   await updateScanProgress(scan.id, {
@@ -235,20 +272,23 @@ export async function runRedTeamScan(scan: Scan): Promise<Scan> {
   });
 
   // Stamp every non-info finding with a stable short ID for citation
-  // (TOB/NCC pattern: ST-RX-001, ST-RX-002…). The 2-letter target slug
-  // makes IDs unambiguous across multiple scans of different domains.
-  const targetSlug = target
-    .replace(/^https?:\/\//, "")
-    .split(".")[0]
-    .replace(/[^a-zA-Z]/g, "")
-    .slice(0, 2)
-    .toUpperCase()
-    .padEnd(2, "X");
-  let stableSeq = 1;
+  // (TOB/NCC pattern: ST-XXXX). Use a content-derived hash of
+  // (category, affectedAsset, title-prefix) so the SAME finding gets the
+  // SAME ID across re-runs — important for tracking remediation over time.
+  // 4 hex chars = 65k namespace, plenty for a single scan; collisions
+  // within a scan are vanishingly unlikely and only affect display.
+  function stableFindingId(f: Finding): string {
+    const fingerprint = `${f.category}|${f.affectedAsset}|${(f.title ?? "").slice(0, 80)}`;
+    let h = 0;
+    for (let i = 0; i < fingerprint.length; i++) {
+      h = (h * 31 + fingerprint.charCodeAt(i)) | 0;
+    }
+    const hex = (h >>> 0).toString(16).padStart(8, "0").slice(-4).toUpperCase();
+    return `ST-${hex}`;
+  }
   for (const f of findings) {
     if (f.severity !== "info" && !f.findingId) {
-      f.findingId = `ST-${targetSlug}-${String(stableSeq).padStart(3, "0")}`;
-      stableSeq += 1;
+      f.findingId = stableFindingId(f);
     }
   }
 

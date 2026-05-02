@@ -132,11 +132,28 @@ export async function runRdapScan(domain: string): Promise<RdapFinding[]> {
 
   // Privacy WHOIS / public contact exposure
   // RDAP exposes registrant contact via entities with role 'registrant'.
-  // If we can read a real personal name + email + phone in the response, privacy isn't on.
+  // The previous JSON.stringify+regex was wrong: GDPR-redacted records often
+  // have NO vCard fields at all (rather than literal "redacted"). Inspect the
+  // vCard for actual contact data — fn (name), email, tel. If any are present
+  // AND non-empty, privacy is OFF. Otherwise it's on (or unknown).
   const registrant = rdap.entities?.find((e) => e.roles?.includes("registrant"));
-  const remarks = (rdap.remarks ?? []).flatMap((r) => r.description ?? []).join(" ").toLowerCase();
-  const hasPrivacyShield = /privacy|redacted|protected|withheld/.test(JSON.stringify(rdap.entities ?? "") + remarks);
-  if (registrant && !hasPrivacyShield) {
+  function vcardHasContact(vcard: unknown): boolean {
+    if (!Array.isArray(vcard)) return false;
+    // vCard is ['vcard', [['fn', {}, 'text', 'John Doe'], ['email', {}, 'text', 'a@b.com']]]
+    const items = vcard[1];
+    if (!Array.isArray(items)) return false;
+    for (const item of items as unknown[]) {
+      if (!Array.isArray(item) || item.length < 4) continue;
+      const [field, , , value] = item as [string, unknown, unknown, unknown];
+      const interesting = ["fn", "email", "tel", "n", "adr"];
+      if (interesting.includes(String(field).toLowerCase()) && typeof value === "string" && value.trim() && !/redacted|privacy|withheld|gdpr/i.test(value)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  const privacyOff = registrant ? vcardHasContact(registrant.vcardArray) : false;
+  if (privacyOff) {
     findings.push({
       category: "domain-hygiene",
       severity: "medium",

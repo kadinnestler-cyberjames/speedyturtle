@@ -380,15 +380,32 @@ export function PdfReport({ scan }: { scan: Scan }) {
                 if (score >= 2) return "#84cc16";
                 return "#16a34a";
               };
-              const sevToImpact: Record<Severity, number> = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
-              const sevToLikelihood: Record<Severity, number> = { critical: 3, high: 2, medium: 2, low: 1, info: 1 };
+              // Derive impact from category (business-impact-ish) and
+              // likelihood from severity + observed defenses. This keeps
+              // dots from all bunching in the same cell.
+              const categoryImpact: Record<Finding["category"], number> = {
+                "credential-exposure": 4,
+                "vulnerability": 3,
+                "breach-exposure": 4,
+                "network-exposure": 3,
+                "domain-hygiene": 2,
+                "email-auth": 2,
+                "tls": 2,
+                "info-disclosure": 1,
+                "misconfig": 1,
+                "subdomain-exposure": 1,
+                "service-fingerprint": 0,
+              };
+              const sevToLikelihood: Record<Severity, number> = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+              const edgePresent = hasEdge(filteredFindings);
               const dots = filteredFindings
                 .filter((f) => f.severity !== "info")
                 .map((f, i) => {
-                  const li = sevToLikelihood[f.severity];
-                  const im = sevToImpact[f.severity];
-                  const cx = ML + cellW * im + cellW / 2 + ((i % 3) - 1) * 6;
-                  const cy = H - MB - cellH * li - cellH / 2 + ((i % 5) - 2) * 4;
+                  const im = Math.min(4, Math.max(0, categoryImpact[f.category] ?? 1));
+                  let li = sevToLikelihood[f.severity];
+                  if (edgePresent && f.category !== "email-auth" && f.category !== "domain-hygiene") li = Math.max(0, li - 1);
+                  const cx = ML + cellW * im + cellW / 2 + (((i * 17) % 9) - 4) * 3;
+                  const cy = H - MB - cellH * li - cellH / 2 + (((i * 23) % 7) - 3) * 3;
                   return { cx, cy, sev: f.severity };
                 });
               const impactLabels = ["Negligible", "Minor", "Moderate", "Major", "Severe"];

@@ -183,9 +183,9 @@ export async function runEmailAuthScan(domain: string): Promise<EmailAuthFinding
   if (foundSelectors.length === 0) {
     findings.push({
       category: "email-auth",
-      severity: "medium",
-      title: "No DKIM signing detected (probed 13 common selectors)",
-      description: `We probed ${COMMON_DKIM_SELECTORS.length} common DKIM selectors and found no published key for ${bare}. Without DKIM, mail you send can be modified in transit and fail authenticity checks at major receivers like Gmail and Office 365.`,
+      severity: "low",
+      title: "No DKIM signing detected at common selectors",
+      description: `We probed ${COMMON_DKIM_SELECTORS.length} commonly-used DKIM selectors (default, google, selector1/2, k1/2, etc.) and found no published key for ${bare}. DKIM may exist at a custom selector specific to your mail provider that we didn't probe — confirm by sending a test email through https://www.mail-tester.com. If DKIM is genuinely off, mail you send can be modified in transit and fail authenticity checks at Gmail/M365.`,
       recommendation: "Enable DKIM signing in your mail provider's admin panel. Most managed providers (Google Workspace, Microsoft 365, SendGrid, Mailgun) ship a one-click toggle.",
       shortTermFix: "Open your mail provider's domain authentication settings, click 'Enable DKIM', and add the DNS record they show you.",
       longTermFix: "Rotate DKIM keys annually. Use a 2048-bit key (some providers default to 1024 — bump it).",
