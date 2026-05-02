@@ -94,7 +94,7 @@ export default async function CtiRealmScoreboardPage() {
         </h1>
         <p className="mt-6 text-lg text-slate-300 max-w-3xl">
           End-to-end detection-rule generation, scored against Microsoft&apos;s public benchmark. Same dataset,
-          same scorer, same tool registry as Mythos. Our agent: Claude Opus 4.5 in a ReAct loop.{" "}
+          same scorer, same tool registry as Mythos. Our agent: Claude Opus 4.7 in a ReAct loop.{" "}
           <Link href="/benchmark/cti-realm/methodology" className="text-amber-300 hover:text-amber-200 underline">
             Methodology →
           </Link>
@@ -175,7 +175,7 @@ export default async function CtiRealmScoreboardPage() {
                 </td>
               </tr>
               <tr>
-                <td className="px-4 py-3 font-semibold text-slate-300">Claude Sonnet 4.5 (external baseline)</td>
+                <td className="px-4 py-3 font-semibold text-slate-300">Claude Sonnet 4.6 (external baseline)</td>
                 <td className="px-4 py-3 font-mono text-slate-500">Pending — to be measured</td>
                 <td className="px-4 py-3 text-slate-400 text-xs">Not yet run. Planned next iteration.</td>
               </tr>
@@ -256,7 +256,7 @@ export default async function CtiRealmScoreboardPage() {
             We publish this even when the score is low. A low honest score with full methodology is more useful
             to other practitioners than a high curated number. The current degradations: (1) no Docker locally,
             so the Kusto-emulator and MITRE-service tools fail at the network layer — see the no-sandbox column
-            in the methodology page; and (2) we haven&apos;t yet run external Sonnet 4.5 as a baseline, so the
+            in the methodology page; and (2) we haven&apos;t yet run external Sonnet 4.6 as a baseline, so the
             comparison row is marked pending.
           </p>
         </div>
@@ -413,7 +413,7 @@ function AwaitingFirstRun({ missing, error }: { missing: boolean; error?: string
             <>
               Edit <code className="text-amber-200">~/.config/secrets.env</code>, uncomment line 10, and paste a
               working key (starts with <code className="text-amber-200">sk-ant-</code>). The agent calls Claude
-              Opus 4.5 — without a key it has nothing to call.
+              Opus 4.7 — without a key it has nothing to call.
             </>
           }
         />

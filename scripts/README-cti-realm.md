@@ -4,7 +4,7 @@ This directory contains the speedyturtle integration of Microsoft's [CTI-REALM](
 
 The two artifacts:
 
-- `src/lib/cti-realm/agent.ts` — TypeScript agent. Drives Claude (`claude-opus-4-5` literal) through a tool-use loop using `@anthropic-ai/sdk`. Tool definitions are passed in by the caller; the agent never invents tools. Exposes both a programmatic API (`runCtiRealmAgent`) and an NDJSON-over-stdio CLI used by the Python solver bridge.
+- `src/lib/cti-realm/agent.ts` — TypeScript agent. Drives Claude (`claude-opus-4-7` literal) through a tool-use loop using `@anthropic-ai/sdk`. Tool definitions are passed in by the caller; the agent never invents tools. Exposes both a programmatic API (`runCtiRealmAgent`) and an NDJSON-over-stdio CLI used by the Python solver bridge.
 - `scripts/run-cti-realm.py` — Python harness. Registers an Inspect AI solver named `speedyturtle_cti_realm_solver`, spawns the TS agent via `npx tsx`, proxies tool calls back into Inspect's tool registry, and writes a normalized score row to `data/cti-realm-scores.json`.
 
 ---
@@ -138,7 +138,7 @@ The script writes two artifacts:
       {
         "run_id": "2026-04-30T22-50-00",
         "task": "cti_realm_25_minimal",
-        "model": "claude-opus-4-5",
+        "model": "claude-opus-4-7",
         "score": 0.0,
         "per_checkpoint": {"C0": 0.0, "C1": 0.0, "C2": 0.0, "C3": 0.0, "C4": 0.0},
         "per_domain": {"aks": 0.0, "linux": 0.0, "cloud": 0.0},
@@ -183,7 +183,7 @@ A row is written **only** if the eval completes successfully and the scorer prod
 
 Per the ticket, the TS agent does NOT define MITRE/Sigma/Kusto tools itself — Inspect's CTI-REALM task registry owns those, and the Python bridge proxies them. This keeps the eval reproducible against upstream and means a published score can credibly be compared against Mythos's 0.624–0.685 range without methodology drift.
 
-The model literal is `claude-opus-4-5`. The Anthropic SDK accepts arbitrary strings; if the API rejects the alias at runtime (404 model-not-found), the agent emits a `model_swap` event and retries once with `claude-opus-4-5-20250929` (the dated build of Opus 4.5 already imported elsewhere in this codebase).
+The model literal is `claude-opus-4-7`. The Anthropic SDK accepts arbitrary strings; if the API rejects the alias at runtime (404 model-not-found), the agent emits a `model_swap` event and retries once with `claude-opus-4-7` (the dated build of Opus 4.7 already imported elsewhere in this codebase).
 
 ---
 
@@ -194,7 +194,7 @@ The benchmark has a public surface at [`/benchmark/cti-realm`](https://speedytur
 What the scoreboard renders:
 
 - **Hero / score card.** Speedyturtle's latest score from `data/cti-realm-scores.json`. When the file is missing or has no completed runs, it renders an `AWAITING_FIRST_RUN` block with the four-step unblock sequence (API key → Docker → run script → cron picks it up). It does NOT show a placeholder number.
-- **Comparison table.** Speedyturtle (latest), Mythos (Microsoft's published 0.624–0.685 range with citation), and Claude Sonnet 4.5 baseline marked "Pending — to be measured".
+- **Comparison table.** Speedyturtle (latest), Mythos (Microsoft's published 0.624–0.685 range with citation), and Claude Sonnet 4.6 baseline marked "Pending — to be measured".
 - **Per-domain breakdown.** Linux, AKS, Cloud — only rendered when the score JSON has `per_domain` populated. Shows speedyturtle alongside Microsoft's published Mythos per-domain aggregates (Linux 0.585, AKS 0.517, Cloud 0.282).
 - **Per-checkpoint breakdown.** C0–C4, only rendered when present in the JSON. Weights: 12.5% / 7.5% / 10% / 5% / 65%.
 - **Methodology section.** Short prose on the page + link to `/benchmark/cti-realm/methodology`, which mirrors this README.

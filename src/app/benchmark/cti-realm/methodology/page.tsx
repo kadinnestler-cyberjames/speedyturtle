@@ -173,8 +173,8 @@ brew install --cask docker && open -a Docker
               drop the <code className="text-sm text-amber-200">--no-sandbox</code> flag.
             </li>
             <li>
-              <strong className="text-amber-200">Sonnet 4.5 baseline pending.</strong> The comparison row
-              for Claude Sonnet 4.5 on the scoreboard is marked &quot;Pending — to be measured&quot;
+              <strong className="text-amber-200">Sonnet 4.6 baseline pending.</strong> The comparison row
+              for Claude Sonnet 4.6 on the scoreboard is marked &quot;Pending — to be measured&quot;
               because we haven&apos;t yet run it. Once we do, it will appear next to speedyturtle and
               Mythos with the same caveats applied.
             </li>

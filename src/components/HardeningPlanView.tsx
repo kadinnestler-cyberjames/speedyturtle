@@ -123,7 +123,7 @@ export function HardeningPlanView({
         <div className="rounded-2xl border border-sky-500/30 bg-sky-500/5 p-8 text-center">
           <h2 className="text-xl font-bold text-sky-200 mb-2">No hardening plan yet</h2>
           <p className="text-slate-300 mb-5">
-            Generating a plan asks Sonnet 4.5 for one patch per finding and Opus 4.5 for chain break-points.
+            Generating a plan asks Sonnet 4.6 for one patch per finding and Opus 4.7 for chain break-points.
             Without an API key it falls back to deterministic heuristics.
           </p>
           <button

@@ -33,7 +33,7 @@ export default function RedTeamPage() {
             <li><strong className="text-emerald-400">1.</strong> <code className="font-mono text-xs bg-slate-800 px-1.5 py-0.5 rounded">subfinder</code> — passive subdomain enumeration from public DNS sources (no scanning of your infra)</li>
             <li><strong className="text-emerald-400">2.</strong> <code className="font-mono text-xs bg-slate-800 px-1.5 py-0.5 rounded">httpx</code> — probe each subdomain for live HTTP services, capture status codes, titles, web servers, tech stack</li>
             <li><strong className="text-emerald-400">3.</strong> <code className="font-mono text-xs bg-slate-800 px-1.5 py-0.5 rounded">nuclei</code> — vuln template scanning at medium/high/critical severity, rate-limited to 30 req/sec</li>
-            <li><strong className="text-emerald-400">4.</strong> <code className="font-mono text-xs bg-slate-800 px-1.5 py-0.5 rounded">claude triage</code> — Claude Sonnet 4.5 reads all findings, prioritizes by real-world impact, writes the next-steps list</li>
+            <li><strong className="text-emerald-400">4.</strong> <code className="font-mono text-xs bg-slate-800 px-1.5 py-0.5 rounded">claude triage</code> — Claude Sonnet 4.6 reads all findings, prioritizes by real-world impact, writes the next-steps list</li>
           </ol>
         </div>
 

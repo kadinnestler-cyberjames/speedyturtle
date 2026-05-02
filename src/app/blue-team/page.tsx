@@ -48,7 +48,7 @@ export default function BlueTeamPage() {
         <h2 className="text-3xl font-bold mb-2">Three capabilities, one product</h2>
         <p className="text-slate-400 mb-10">Built directly on top of the Red Team scanner. No new dependencies, no new logins.</p>
         <div className="grid md:grid-cols-3 gap-4">
-          <Card title="Hardening Loop" body="Per-finding patch suggestions (Sonnet 4.5), break-points per exploit chain (Opus 4.5), and a one-click verification re-scan to prove the fix held." />
+          <Card title="Hardening Loop" body="Per-finding patch suggestions (Sonnet 4.6), break-points per exploit chain (Opus 4.7), and a one-click verification re-scan to prove the fix held." />
           <Card title="Continuous Monitoring" body="Register a target. Daily nuclei scan via Vercel cron. Diff vs baseline. Email alert via Resend when a new critical or high lands." />
           <Card title="Compliance Tracker" body="Findings mapped to controls in HIPAA-SRA, PCI DSS SAQ-A, NY SHIELD, and NIST CSF 2.0. Coverage gauge. PDF export tailored per framework." />
         </div>
