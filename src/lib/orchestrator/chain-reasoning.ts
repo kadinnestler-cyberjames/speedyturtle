@@ -31,6 +31,8 @@ After identifying chains, perform **Cheapest Cut analysis**: across ALL the chai
 
 **Also generate Mermaid diagrams**: for each chain, produce a mermaid sequence diagram string showing the attack flow.
 
+**Plus an OVERALL attack tree** (Mermaid \`graph TD\` syntax) as a separate top-level field. Root = "Compromise [target]" or the worst-case business outcome (data exfil, ransomware, account takeover). Branches = each chain's entry vector. Leaf nodes that the operator's defenses already block should be tagged \`[BLOCKED]\` in the label. This single tree is what the SMB owner shows their insurance broker — a one-glance "what could happen / what's already prevented" picture.
+
 Output strict JSON:
 {
   "chains": [
@@ -50,6 +52,7 @@ Output strict JSON:
     "implementationCost": "single config change in nginx.conf",
     "explanation": "Three of the identified chains rely on JS-accessible cookies. One config change breaks all three."
   },
+  "overallAttackTree": "graph TD\\n  R[Compromise target] --> A[Phishing owner]\\n  R --> B[Credential stuffing /admin]\\n  A -.BLOCKED.-> X[2FA on staff Google account]\\n  ...",
   "noChainsReason": null | "explanation"
 }`;
 
@@ -74,6 +77,13 @@ export type CheapestCut = {
 export type ChainReasoningOutput = {
   chains: ExploitChain[];
   cheapestCut?: CheapestCut | null;
+  /**
+   * Overall Mermaid attack tree (graph TD syntax) showing all chains as
+   * branches under one worst-case root, with [BLOCKED] tags on leaf nodes
+   * that observed defenses already prevent. Distinct from per-chain
+   * sequence diagrams; this is the one-glance "what could happen" picture.
+   */
+  overallAttackTree?: string;
   noChainsReason?: string | null;
 };
 
@@ -133,6 +143,7 @@ export async function reasonAboutChains(
       return {
         chains: apiChains,
         cheapestCut: apiCut,
+        overallAttackTree: typeof parsed.overallAttackTree === "string" ? parsed.overallAttackTree : undefined,
         noChainsReason: parsed.noChainsReason ?? null,
       };
     }

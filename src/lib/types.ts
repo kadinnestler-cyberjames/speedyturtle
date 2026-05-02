@@ -97,6 +97,7 @@ export type Scan = {
   };
   exploitChains?: ExploitChain[];
   exploitChainsNote?: string;
+  overallAttackTree?: string;
   cheapestCut?: CheapestCut | null;
   adversaryProfile?: AdversaryAssessment[];
   validation?: {

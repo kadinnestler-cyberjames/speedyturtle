@@ -259,6 +259,7 @@ export async function runRedTeamScan(scan: Scan): Promise<Scan> {
     validation,
     exploitChains: chainResult.chains,
     exploitChainsNote: chainResult.noChainsReason ?? undefined,
+    overallAttackTree: chainResult.overallAttackTree,
     cheapestCut: chainResult.cheapestCut,
     adversaryProfile,
     genealogy,

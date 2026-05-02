@@ -158,6 +158,21 @@ export function ScanResult({ scanId, initialScan }: { scanId: string; initialSca
         </section>
       )}
 
+      {scan.overallAttackTree && (
+        <section className="bg-slate-900/40 border border-slate-700 rounded-2xl p-6">
+          <div className="mb-3">
+            <div className="text-xs uppercase tracking-wider text-amber-400 font-semibold">🌳 Overall Attack Tree</div>
+            <h2 className="text-lg font-bold text-amber-200 mt-1">What could happen — and what your defenses already block</h2>
+          </div>
+          <p className="text-sm text-slate-300 mb-3">
+            One-glance view of the worst-case business outcome at the root, every chain&apos;s entry vector as a branch,
+            and <span className="text-emerald-300">[BLOCKED]</span> tags on leaves that observed defenses already prevent.
+            Show this to your insurance broker.
+          </p>
+          <MermaidDiagram code={scan.overallAttackTree} className="my-2" />
+        </section>
+      )}
+
       {scan.exploitChains && scan.exploitChains.length > 0 && (
         <section className="bg-rose-500/5 border border-rose-500/30 rounded-2xl p-6">
           <div className="flex items-baseline justify-between gap-2 flex-wrap mb-3">
