@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Svg, Rect, Circle, Line as PdfLine } from "@react-pdf/renderer";
 import type { Scan, Severity } from "@/lib/types";
 
 const sev_color: Record<Severity, string> = {
@@ -124,6 +124,96 @@ export function PdfReport({ scan }: { scan: Scan }) {
         </Page>
       )}
 
+      {/* NIST SP 800-30 5x5 risk matrix — every non-info finding plotted as a dot */}
+      {filteredFindings.some((f) => f.severity !== "info") && (
+        <Page size="LETTER" style={styles.page}>
+          <Text style={styles.h1}>Risk Posture (NIST SP 800-30)</Text>
+          <Text style={styles.meta}>
+            Likelihood × Business impact. Non-info findings plotted as dots. Empty top-right is the punchline — clean
+            quadrants are evidence the defenses you have are doing their job.
+          </Text>
+          <View style={{ marginTop: 16, alignItems: "center" }}>
+            {(() => {
+              const W = 360;
+              const H = 280;
+              const ML = 70;
+              const MB = 40;
+              const cellW = (W - ML) / 5;
+              const cellH = (H - MB) / 5;
+              const cellColor = (likelihood: number, impact: number): string => {
+                const score = likelihood + impact;
+                if (score >= 8) return "#dc2626";
+                if (score >= 6) return "#ea580c";
+                if (score >= 4) return "#f59e0b";
+                if (score >= 2) return "#84cc16";
+                return "#16a34a";
+              };
+              const sevToImpact: Record<Severity, number> = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+              const sevToLikelihood: Record<Severity, number> = { critical: 3, high: 2, medium: 2, low: 1, info: 1 };
+              const dots = filteredFindings
+                .filter((f) => f.severity !== "info")
+                .map((f, i) => {
+                  const li = sevToLikelihood[f.severity];
+                  const im = sevToImpact[f.severity];
+                  const cx = ML + cellW * im + cellW / 2 + ((i % 3) - 1) * 6;
+                  const cy = H - MB - cellH * li - cellH / 2 + ((i % 5) - 2) * 4;
+                  return { cx, cy, sev: f.severity };
+                });
+              const impactLabels = ["Negligible", "Minor", "Moderate", "Major", "Severe"];
+              const likeLabels = ["Rare", "Unlikely", "Possible", "Likely", "Almost cert."];
+              return (
+                <Svg width={W} height={H}>
+                  {Array.from({ length: 5 }, (_, li) =>
+                    Array.from({ length: 5 }, (_, im) => (
+                      <Rect
+                        key={`${li}-${im}`}
+                        x={ML + cellW * im}
+                        y={H - MB - cellH * (li + 1)}
+                        width={cellW}
+                        height={cellH}
+                        fill={cellColor(li, im)}
+                        fillOpacity={0.18}
+                        stroke="#cbd5e1"
+                        strokeWidth={0.5}
+                      />
+                    )),
+                  )}
+                  {impactLabels.map((lbl, i) => (
+                    <Text
+                      key={`xl-${i}`}
+                      x={ML + cellW * i + cellW / 2}
+                      y={H - MB + 14}
+                      style={{ fontSize: 7, color: "#475569" }}
+                    >
+                      {lbl}
+                    </Text>
+                  ))}
+                  {likeLabels.map((lbl, i) => (
+                    <Text
+                      key={`yl-${i}`}
+                      x={6}
+                      y={H - MB - cellH * i - cellH / 2 + 3}
+                      style={{ fontSize: 7, color: "#475569" }}
+                    >
+                      {lbl}
+                    </Text>
+                  ))}
+                  <PdfLine x1={ML} y1={0} x2={ML} y2={H - MB} stroke="#475569" strokeWidth={0.8} />
+                  <PdfLine x1={ML} y1={H - MB} x2={W} y2={H - MB} stroke="#475569" strokeWidth={0.8} />
+                  {dots.map((d, i) => (
+                    <Circle key={i} cx={d.cx} cy={d.cy} r={4} fill={sev_color[d.sev]} fillOpacity={0.9} />
+                  ))}
+                </Svg>
+              );
+            })()}
+            <Text style={{ fontSize: 8, color: "#64748b", marginTop: 6 }}>
+              X axis: Business impact if exploited · Y axis: Likelihood the scanner-observed conditions enable
+              compromise. Methodology adapted from NIST SP 800-30 Rev. 1, Appendix I.
+            </Text>
+          </View>
+        </Page>
+      )}
+
       {scan.adversaryProfile && scan.adversaryProfile.length > 0 && (
         <Page size="LETTER" style={styles.page}>
           <Text style={styles.h1}>Adversary Persona Simulation</Text>
@@ -193,13 +283,38 @@ export function PdfReport({ scan }: { scan: Scan }) {
               {items.map((f) => {
                 const verdict = verdictByFindingId.get(f.id.slice(0, 8)) ?? verdictByFindingId.get(f.id);
                 return (
-                  <View key={f.id} style={styles.finding}>
-                    <Text style={{ fontSize: 11, fontWeight: 700, marginBottom: 2 }}>{f.title}</Text>
-                    {f.description && <Text style={{ fontSize: 9, color: "#475569", marginBottom: 3 }}>{f.description}</Text>}
+                  <View key={f.id} style={styles.finding} wrap={false}>
+                    <View style={{ flexDirection: "row", alignItems: "baseline", marginBottom: 2 }}>
+                      {f.findingId && (
+                        <Text style={{ fontSize: 8, fontWeight: 700, color: "#64748b", marginRight: 6, fontFamily: "Courier" }}>
+                          {f.findingId}
+                        </Text>
+                      )}
+                      <Text style={{ fontSize: 11, fontWeight: 700, flex: 1 }}>{f.title}</Text>
+                    </View>
+                    {f.description && <Text style={{ fontSize: 9, color: "#475569", marginBottom: 3, lineHeight: 1.4 }}>{f.description}</Text>}
                     <Text style={{ fontSize: 8, color: "#64748b" }}>Asset: {f.affectedAsset}</Text>
-                    <Text style={{ fontSize: 8, color: "#64748b" }}>Scanner: {f.scanner}{f.cveId ? ` · ${f.cveId} (CVSS ${f.cvssScore?.toFixed(1)})` : ""}</Text>
+                    <Text style={{ fontSize: 8, color: "#64748b" }}>Scanner: {f.scanner}{f.cveId ? ` · ${f.cveId}${f.cvssScore != null ? ` (CVSS ${f.cvssScore.toFixed(1)})` : ""}` : ""}</Text>
+                    {f.shortTermFix && (
+                      <View style={{ marginTop: 6, padding: 6, backgroundColor: "#fef3c7", borderRadius: 3, borderLeft: "2 solid #f59e0b" }}>
+                        <Text style={{ fontSize: 8, fontWeight: 700, color: "#78350f", marginBottom: 1 }}>FIX THIS WEEK</Text>
+                        <Text style={{ fontSize: 9, color: "#451a03", lineHeight: 1.4 }}>{f.shortTermFix}</Text>
+                      </View>
+                    )}
+                    {f.longTermFix && (
+                      <View style={{ marginTop: 4, padding: 6, backgroundColor: "#eff6ff", borderRadius: 3, borderLeft: "2 solid #3b82f6" }}>
+                        <Text style={{ fontSize: 8, fontWeight: 700, color: "#1e3a8a", marginBottom: 1 }}>FIX THIS QUARTER</Text>
+                        <Text style={{ fontSize: 9, color: "#1e3a8a", lineHeight: 1.4 }}>{f.longTermFix}</Text>
+                      </View>
+                    )}
+                    {!f.shortTermFix && f.recommendation && (
+                      <View style={{ marginTop: 6, padding: 6, backgroundColor: "#fef3c7", borderRadius: 3, borderLeft: "2 solid #f59e0b" }}>
+                        <Text style={{ fontSize: 8, fontWeight: 700, color: "#78350f", marginBottom: 1 }}>RECOMMENDED FIX</Text>
+                        <Text style={{ fontSize: 9, color: "#451a03", lineHeight: 1.4 }}>{f.recommendation}</Text>
+                      </View>
+                    )}
                     {verdict && verdict.verdict !== "false-positive" && (
-                      <Text style={{ fontSize: 8, color: "#047857", marginTop: 3, fontStyle: "italic" }}>
+                      <Text style={{ fontSize: 8, color: "#047857", marginTop: 4, fontStyle: "italic" }}>
                         Validator ({verdict.verdict}): {verdict.reasoning}
                       </Text>
                     )}
@@ -209,6 +324,55 @@ export function PdfReport({ scan }: { scan: Scan }) {
             </View>
           );
         })}
+      </Page>
+
+      <Page size="LETTER" style={styles.page}>
+        <Text style={styles.h1}>References</Text>
+        <Text style={styles.meta}>
+          Industry sources cited in the analysis above. Methodology, severity rationale, and dollar-impact framings
+          all trace back to public references — no proprietary scoring.
+        </Text>
+        <View style={{ marginTop: 8 }}>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>
+            [1] IBM 2025 Cost of a Data Breach Report — global average $4.44M, U.S. average $10.22M, per-record
+            costs $160 customer PII / $168 employee PII / $178 IP. https://www.ibm.com/reports/data-breach
+          </Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>
+            [2] Verizon 2025 Data Breach Investigations Report — initial-access mix, ransomware composition,
+            human-element rate. https://www.verizon.com/business/resources/reports/dbir/
+          </Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>
+            [3] Mandiant M-Trends 2025 — global median dwell time, attribution confidence framing.
+            https://cloud.google.com/security/resources/m-trends
+          </Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>
+            [4] NIST SP 800-30 Rev. 1, Appendix I — 5×5 likelihood × impact risk matrix.
+            https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-30r1.pdf
+          </Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>
+            [5] MITRE ATT&CK — Enterprise techniques referenced in adversary persona simulations.
+            https://attack.mitre.org/
+          </Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>
+            [6] Have I Been Pwned — domain breach exposure check used in this report.
+            https://haveibeenpwned.com
+          </Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>
+            [7] Shodan InternetDB — IP/port/CVE exposure cross-reference.
+            https://internetdb.shodan.io
+          </Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>
+            [8] RFC 7208 (SPF), RFC 7489 (DMARC), RFC 8461 (MTA-STS) — email authentication standards probed.
+          </Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>
+            [9] OWASP Top 10:2021 — vulnerability categorization framework.
+            https://owasp.org/Top10/
+          </Text>
+          <Text style={{ fontSize: 10, marginBottom: 4 }}>
+            [10] CIS Controls v8 — short-term and long-term remediation framings adapted from CIS implementation
+            groups. https://www.cisecurity.org/controls
+          </Text>
+        </View>
       </Page>
 
       {scan.validation && fpFindings.length > 0 && (

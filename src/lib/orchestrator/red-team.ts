@@ -234,6 +234,24 @@ export async function runRedTeamScan(scan: Scan): Promise<Scan> {
     message: "Scan complete.",
   });
 
+  // Stamp every non-info finding with a stable short ID for citation
+  // (TOB/NCC pattern: ST-RX-001, ST-RX-002…). The 2-letter target slug
+  // makes IDs unambiguous across multiple scans of different domains.
+  const targetSlug = target
+    .replace(/^https?:\/\//, "")
+    .split(".")[0]
+    .replace(/[^a-zA-Z]/g, "")
+    .slice(0, 2)
+    .toUpperCase()
+    .padEnd(2, "X");
+  let stableSeq = 1;
+  for (const f of findings) {
+    if (f.severity !== "info" && !f.findingId) {
+      f.findingId = `ST-${targetSlug}-${String(stableSeq).padStart(3, "0")}`;
+      stableSeq += 1;
+    }
+  }
+
   const finalScan: Scan = {
     ...scan,
     findings,
