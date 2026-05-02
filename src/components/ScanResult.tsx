@@ -227,7 +227,7 @@ export function ScanResult({ scanId, initialScan }: { scanId: string; initialSca
 
       {scan.triage && (
         <section className="bg-emerald-500/5 border border-emerald-500/30 rounded-2xl p-6">
-          <h2 className="text-lg font-bold text-emerald-300 mb-3">Triage summary (Claude)</h2>
+          <h2 className="text-lg font-bold text-emerald-300 mb-3">Triage summary</h2>
           <p className="text-slate-100 leading-relaxed mb-5">{scan.triage.summary}</p>
 
           <div className="grid md:grid-cols-2 gap-6">
@@ -273,7 +273,7 @@ export function ScanResult({ scanId, initialScan }: { scanId: string; initialSca
               <div className="text-xs uppercase tracking-wider text-rose-400 font-semibold">⚡ Exploit Chain Reasoning</div>
               <h2 className="text-lg font-bold text-rose-200 mt-1">{scan.exploitChains.length} composable attack {scan.exploitChains.length === 1 ? "chain" : "chains"} identified</h2>
             </div>
-            <span className="text-xs text-rose-300/70">Claude Opus · Mythos-inspired multi-step reasoning</span>
+            <span className="text-xs text-rose-300/70">Mythos-inspired multi-step reasoning</span>
           </div>
           <p className="text-sm text-slate-300 mb-5">
             These chains compose primitives that look low-severity in isolation. Scanners miss them because they require thinking 3-5 moves ahead.

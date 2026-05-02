@@ -170,7 +170,7 @@ export function PdfReport({ scan }: { scan: Scan }) {
       {scan.triage && (
         <Page size="LETTER" style={styles.page}>
           <Text style={styles.h1}>Executive Summary</Text>
-          <Text style={styles.meta}>Triaged by Claude</Text>
+          <Text style={styles.meta}>Autonomous triage</Text>
           <View style={styles.callout}>
             <Text style={{ fontSize: 11, lineHeight: 1.6 }}>{scan.triage.summary}</Text>
           </View>
