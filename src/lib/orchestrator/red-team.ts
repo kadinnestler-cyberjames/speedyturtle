@@ -75,15 +75,15 @@ export async function runRedTeamScan(scan: Scan): Promise<Scan> {
   await updateScanProgress(scan.id, {
     step: "nuclei",
     pct: 60,
-    message: `Running nuclei against ${liveUrls.length || 1} live hosts (info+low+medium+high+critical, validator filters FPs)…`,
+    message: `Running nuclei against ${liveUrls.length || 1} live host(s) — 5,000+ templates, low/medium/high/critical severity. This is the slow part: typical 3-8 min, heavy WordPress/PHP sites can hit 15 min.`,
   });
   // nuclei also needs URL prefixes, not bare hostnames. Default to https:// fallback.
   const nucleiTargets = liveUrls.length > 0 ? liveUrls : [`https://${target}`];
-  // Drop "info" — those are mostly fingerprint/banner templates that dominate the
-  // template count and produce thousands of low-signal results that the validator
-  // would just filter anyway. Keep low+ to catch real exposures + CVE matches.
-  // Bump ceiling to 15 min so heavy targets (vulnweb-class) don't get SIGTERM'd
-  // mid-scan — a truncated JSONL produces 0 findings, which is worse than waiting.
+  // Drop "info" — those are mostly fingerprint/banner templates that dominate
+  // the template count and produce thousands of low-signal results that the
+  // validator would just filter anyway. Keep low+ to catch real exposures
+  // and CVE matches. Bump ceiling to 15 min so heavy targets don't get
+  // SIGTERM'd mid-scan — a truncated JSONL produces 0 findings.
   const vulns: NucleiFinding[] = await runNuclei(nucleiTargets, {
     severity: "low,medium,high,critical",
     timeoutMs: 900_000,
