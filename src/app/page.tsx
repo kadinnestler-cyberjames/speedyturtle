@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ScanForm } from "@/components/ScanForm";
 import { Logo } from "@/components/Logo";
 
 export default function HomePage() {
@@ -35,6 +34,9 @@ export default function HomePage() {
           Autonomous offensive scanning + blue-team hardening, built for businesses that don&apos;t have a $50K Snyk contract. Predictable monthly cost. No procurement cycle. Deploy on your own infra.
         </p>
         <div className="mt-8 flex justify-center gap-3 flex-wrap">
+          <Link href="/red-team" className="px-6 py-3 rounded-lg bg-rose-500 text-white font-semibold hover:bg-rose-400">
+            Open Red Team →
+          </Link>
           <Link href="/blue-team" className="px-6 py-3 rounded-lg bg-sky-500 text-slate-950 font-semibold hover:bg-sky-400">
             Open Blue Team →
           </Link>
@@ -43,10 +45,6 @@ export default function HomePage() {
           </Link>
         </div>
         <p className="mt-3 text-xs text-slate-400">Free tier: 1 scan/mo · $99/mo Starter · $499/mo Pro · $1,499 flat Unlimited</p>
-      </section>
-
-      <section className="max-w-3xl mx-auto px-6 pb-16">
-        <ScanForm />
       </section>
 
       <footer className="border-t border-slate-800 mt-12">
