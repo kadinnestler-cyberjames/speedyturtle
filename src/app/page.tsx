@@ -35,9 +35,6 @@ export default function HomePage() {
           Autonomous offensive scanning + blue-team hardening, built for businesses that don&apos;t have a $50K Snyk contract. Predictable monthly cost. No procurement cycle. Deploy on your own infra.
         </p>
         <div className="mt-8 flex justify-center gap-3 flex-wrap">
-          <Link href="/red-team" className="px-6 py-3 rounded-lg bg-rose-500 text-white font-semibold hover:bg-rose-400">
-            Open Red Team →
-          </Link>
           <Link href="/blue-team" className="px-6 py-3 rounded-lg bg-sky-500 text-slate-950 font-semibold hover:bg-sky-400">
             Open Blue Team →
           </Link>
