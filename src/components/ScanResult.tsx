@@ -352,9 +352,14 @@ export function ScanResult({ scanId, initialScan }: { scanId: string; initialSca
                     {items.map((f) => {
                       const verdict = findVerdict(verdictByFindingId, f.id);
                       return (
-                        <article key={f.id} className="py-2 border-b border-slate-800 last:border-0">
+                        <article key={f.id} className="py-3 border-b border-slate-800 last:border-0">
                           <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                            <h4 className="font-semibold text-slate-100">{f.title}</h4>
+                            <div className="flex items-baseline gap-2 flex-wrap">
+                              {f.findingId && (
+                                <span className="text-[10px] font-mono text-slate-500 font-semibold">{f.findingId}</span>
+                              )}
+                              <h4 className="font-semibold text-slate-100">{f.title}</h4>
+                            </div>
                             <div className="flex items-center gap-2">
                               {verdict && (
                                 <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${VERDICT_PILL[verdict.verdict]}`}>
@@ -364,16 +369,34 @@ export function ScanResult({ scanId, initialScan }: { scanId: string; initialSca
                               <span className="text-xs text-slate-500 font-mono">{f.scanner}</span>
                             </div>
                           </div>
-                          {f.description && <p className="text-sm text-slate-400 mt-1">{f.description}</p>}
+                          {f.description && <p className="text-sm text-slate-400 mt-1 whitespace-pre-line">{f.description}</p>}
+                          {f.shortTermFix && (
+                            <div className="mt-2 px-3 py-2 rounded-md border-l-2 border-amber-500 bg-amber-500/5">
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-0.5">Fix this week</div>
+                              <p className="text-sm text-amber-100">{f.shortTermFix}</p>
+                            </div>
+                          )}
+                          {f.longTermFix && (
+                            <div className="mt-2 px-3 py-2 rounded-md border-l-2 border-sky-500 bg-sky-500/5">
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-sky-300 mb-0.5">Fix this quarter</div>
+                              <p className="text-sm text-sky-100">{f.longTermFix}</p>
+                            </div>
+                          )}
+                          {!f.shortTermFix && f.recommendation && (
+                            <div className="mt-2 px-3 py-2 rounded-md border-l-2 border-emerald-500 bg-emerald-500/5">
+                              <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-0.5">Recommended fix</div>
+                              <p className="text-sm text-emerald-100">{f.recommendation}</p>
+                            </div>
+                          )}
                           {verdict && (
-                            <p className="text-xs text-slate-500 mt-1 italic">
+                            <p className="text-xs text-slate-500 mt-2 italic">
                               <span className="text-slate-400">Validator:</span> {verdict.reasoning}
                               {verdict.manualCheckNeeded && (
                                 <> · <span className="text-amber-300/80">Check:</span> {verdict.manualCheckNeeded}</>
                               )}
                             </p>
                           )}
-                          <div className="text-xs text-slate-500 mt-1 font-mono break-all">{f.affectedAsset}</div>
+                          <div className="text-xs text-slate-500 mt-2 font-mono break-all">{f.affectedAsset}</div>
                           {f.cveId && (
                             <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">
                               {f.cveId} · CVSS {f.cvssScore?.toFixed(1)}
