@@ -124,6 +124,58 @@ export function PdfReport({ scan }: { scan: Scan }) {
         </Page>
       )}
 
+      {scan.adversaryProfile && scan.adversaryProfile.length > 0 && (
+        <Page size="LETTER" style={styles.page}>
+          <Text style={styles.h1}>Adversary Persona Simulation</Text>
+          <Text style={styles.meta}>
+            If a known threat actor were targeting you — exposure score, likely entry point, expected dwell time.
+            MITRE ATT&CK + named-APT TTP cross-reference.
+          </Text>
+          {scan.adversaryProfile.map((p, i) => {
+            const exposure = p.exposureScore ?? 0;
+            const exposureColor = exposure >= 50 ? "#dc2626" : exposure >= 25 ? "#d97706" : exposure >= 10 ? "#16a34a" : "#64748b";
+            return (
+              <View key={i} style={{ marginBottom: 12, padding: 10, backgroundColor: "#f8fafc", borderRadius: 4, borderLeft: `3 solid ${exposureColor}` }}>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 700 }}>{p.persona ?? "Unknown actor"}</Text>
+                  <Text style={[styles.pill, { backgroundColor: exposureColor }]}>EXPOSURE {exposure}/100</Text>
+                </View>
+                {p.description && (
+                  <Text style={{ fontSize: 9, color: "#475569", marginBottom: 4, fontStyle: "italic" }}>{p.description}</Text>
+                )}
+                {p.likelyEntryPoint && (
+                  <View style={{ marginBottom: 3 }}>
+                    <Text style={{ fontSize: 8, color: "#64748b", fontWeight: 700 }}>LIKELY ENTRY POINT</Text>
+                    <Text style={{ fontSize: 10, color: "#0f172a" }}>{p.likelyEntryPoint}</Text>
+                  </View>
+                )}
+                <View style={{ flexDirection: "row", marginTop: 4 }}>
+                  <Text style={{ fontSize: 8, color: "#64748b", marginRight: 12 }}>
+                    <Text style={{ fontWeight: 700 }}>Expected dwell:</Text> {p.expectedDwellTimeDays ?? "?"} days
+                  </Text>
+                </View>
+                {p.conditionsMet && p.conditionsMet.length > 0 && (
+                  <View style={{ marginTop: 4 }}>
+                    <Text style={{ fontSize: 8, color: "#64748b", fontWeight: 700, marginBottom: 1 }}>CONDITIONS MET</Text>
+                    {p.conditionsMet.slice(0, 3).map((c, idx) => (
+                      <Text key={idx} style={{ fontSize: 8, color: "#475569" }}>· {c}</Text>
+                    ))}
+                  </View>
+                )}
+                {p.conditionsMissing && p.conditionsMissing.length > 0 && (
+                  <View style={{ marginTop: 4 }}>
+                    <Text style={{ fontSize: 8, color: "#64748b", fontWeight: 700, marginBottom: 1 }}>CONDITIONS MISSING (defenses holding)</Text>
+                    {p.conditionsMissing.slice(0, 3).map((c, idx) => (
+                      <Text key={idx} style={{ fontSize: 8, color: "#475569" }}>· {c}</Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+            );
+          })}
+        </Page>
+      )}
+
       <Page size="LETTER" style={styles.page}>
         <Text style={styles.h1}>{findingsHeading}</Text>
         <Text style={styles.meta}>

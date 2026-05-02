@@ -20,6 +20,9 @@ export default function HomePage() {
       </header>
 
       <section className="max-w-5xl mx-auto px-6 pt-12 pb-12 text-center">
+        <div className="flex justify-center mb-5">
+          <Logo size={96} />
+        </div>
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-5">
           Autonomous AI security · Mythos-inspired · for SMBs
         </div>
@@ -32,8 +35,8 @@ export default function HomePage() {
           Mythos-inspired offensive scanning, built for businesses that don&apos;t have a $50K Snyk contract. Five world-first reasoning layers: validator subagent, exploit chain reasoning, cheapest cut, adversary persona simulation, vulnerability genealogy.
         </p>
         <div className="mt-8 flex justify-center gap-3 flex-wrap">
-          <Link href="/red-team" className="px-6 py-3 rounded-lg bg-emerald-500 text-slate-950 font-semibold hover:bg-emerald-400">
-            Run a Red Team scan
+          <Link href="/red-team" className="px-6 py-3 rounded-lg bg-rose-500 text-white font-semibold hover:bg-rose-400">
+            Open Red Team →
           </Link>
           <Link href="/blue-team" className="px-6 py-3 rounded-lg bg-sky-500 text-slate-950 font-semibold hover:bg-sky-400">
             Open Blue Team →
